@@ -1,0 +1,74 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"> <!-- Background color for preview -->
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/bottom_panel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:keepScreenOn="true" />
+
+    <ImageButton
+        android:id="@+id/switch_btn"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="8dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_switch"
+        app:layout_constraintTop_toTopOf="@id/preview"
+        app:layout_constraintEnd_toEndOf="@id/preview" />
+
+    <LinearLayout
+        android:id="@+id/bottom_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="8dp"
+        android:background="@android:color/transparent"
+        android:showDividers="none"> <!-- Remove dividers -->
+
+        <Button
+            android:id="@+id/img_capture_btn"
+            android:layout_width="110dp"
+            android:layout_height="56dp"
+            android:background="@drawable/circle_button_background"
+            android:gravity="center"
+            android:text="@string/photo"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/video_btn"
+            android:layout_width="110dp"
+            android:layout_height="56dp"
+            android:background="@drawable/circle_button_background"
+            android:gravity="center"
+            android:text="@string/video"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/gallery_btn"
+            android:layout_width="110dp"
+            android:layout_height="56dp"
+            android:background="@drawable/circle_button_background"
+            android:gravity="center"
+            android:text="@string/gallery"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:layout_margin="8dp"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">DemoCamera</string>
+    <string name="gallery">Gallery</string>
+    <string name="switch_cam">Switch</string>
+    <string name="photo">Photo</string>
+    <string name="video">Video</string>
+    <string name="record">Record</string>
+    <string name="back">Back</string>
+    <string name="image">image</string>
+    <string name="delete">Delete</string>
+</resources>
