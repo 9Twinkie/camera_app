@@ -3,11 +3,11 @@ package ru.rut.democamera
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -22,7 +22,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
     private lateinit var cameraSelector: CameraSelector
@@ -72,7 +72,12 @@ class MainActivity : AppCompatActivity() {
 
         cameraPermissionResult.launch(android.Manifest.permission.CAMERA)
 
-        binding.imgCaptureBtn.setOnClickListener {
+        // Add reusable NavBarFragment
+        supportFragmentManager.beginTransaction()
+            .replace(binding.navbarContainer.id, NavBarFragment(this))
+            .commit()
+
+        binding.captureButton.setOnClickListener {
             takePhoto()
             animateFlash()
         }
@@ -85,16 +90,6 @@ class MainActivity : AppCompatActivity() {
             }
             startCamera()
         }
-        binding.galleryBtn.setOnClickListener {
-            val intent = Intent(this, GalleryActivity::class.java)
-            startActivity(intent)
-        }
-
-        binding.videoBtn.setOnClickListener {
-            val intent = Intent(this, VideoActivity::class.java)
-            startActivity(intent)
-        }
-
     }
 
     override fun onDestroy() {
@@ -135,5 +130,19 @@ class MainActivity : AppCompatActivity() {
                 binding.root.foreground = null
             }, 50)
         }, 100)
+    }
+
+    override fun onGallerySelected() {
+        val intent = Intent(this, GalleryActivity::class.java)
+        startActivity(intent)
+    }
+
+    override fun onPhotoModeSelected() {
+        // Already in photo mode
+    }
+
+    override fun onVideoModeSelected() {
+        val intent = Intent(this, VideoActivity::class.java)
+        startActivity(intent)
     }
 }

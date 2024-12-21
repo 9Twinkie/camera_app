@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -18,7 +17,8 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class VideoActivity : AppCompatActivity() {
+class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
+
     private lateinit var binding: ActivityVideoBinding
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
@@ -57,9 +57,16 @@ class VideoActivity : AppCompatActivity() {
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // Request necessary permissions
         requestPermissions()
 
-        binding.recordBtn.setOnClickListener {
+        // Add NavBarFragment to reuse buttons from the PhotoActivity
+        supportFragmentManager.beginTransaction()
+            .replace(binding.navbarContainer.id, NavBarFragment(this))
+            .commit()
+
+        // Handle Capture button click (start or stop recording)
+        binding.captureButton.setOnClickListener {
             if (recording == null) {
                 startRecording()
             } else {
@@ -67,6 +74,7 @@ class VideoActivity : AppCompatActivity() {
             }
         }
 
+        // Handle camera switch button click (switch between front and back cameras)
         binding.switchBtn.setOnClickListener {
             cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
                 CameraSelector.DEFAULT_FRONT_CAMERA
@@ -74,14 +82,6 @@ class VideoActivity : AppCompatActivity() {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
             startCamera()
-        }
-
-        binding.galleryBtn.setOnClickListener {
-            startActivity(Intent(this, GalleryActivity::class.java))
-        }
-
-        binding.photoBtn.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
         }
     }
 
@@ -139,7 +139,7 @@ class VideoActivity : AppCompatActivity() {
                 when (recordEvent) {
                     is VideoRecordEvent.Start -> {
                         Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
-                        binding.recordBtn.text = "Stop"
+                        binding.captureButton.text = "Stop"
                     }
                     is VideoRecordEvent.Finalize -> {
                         if (recordEvent.hasError()) {
@@ -147,7 +147,7 @@ class VideoActivity : AppCompatActivity() {
                         } else {
                             Toast.makeText(this, "Video saved: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
                         }
-                        binding.recordBtn.text = "Record"
+                        binding.captureButton.text = "Start"
                         recording = null
                     }
                 }
@@ -157,6 +157,21 @@ class VideoActivity : AppCompatActivity() {
     private fun stopRecording() {
         recording?.stop()
         recording = null
+    }
+
+    // NavBarFragment listener methods
+    override fun onGallerySelected() {
+        finish()
+        startActivity(Intent(this, GalleryActivity::class.java))
+    }
+
+    override fun onPhotoModeSelected() {
+        finish()
+        startActivity(Intent(this, MainActivity::class.java))
+    }
+
+    override fun onVideoModeSelected() {
+        // Already in video mode, so do nothing
     }
 
     override fun onDestroy() {
