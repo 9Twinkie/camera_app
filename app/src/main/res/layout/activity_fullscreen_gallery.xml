@@ -1,44 +1,52 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@android:color/black"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:clipToPadding="false"
+        android:paddingTop="96dp"
+    android:paddingBottom="16dp"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 
-    <LinearLayout
-        android:id="@+id/button_panel"
-        style="?android:attr/buttonBarStyle"
+    <!-- Back Button positioned at top-left -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/backBtn"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:backgroundTint="?attr/colorPrimary"
+        android:foregroundGravity="center"
+        app:icon="@drawable/ic_arrow_left"
+        app:iconTint="@android:color/white"
+        app:iconSize="48dp"
+        app:cornerRadius="40dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp" />
+
+    <!-- Delete Button positioned at top-right, aligned vertically with Back Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/delete_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_marginEnd="16dp"
+        android:text="@string/delete"
+        android:textSize="18sp"
+        style="@style/Widget.Material3.Button"
+        app:layout_constraintTop_toTopOf="@id/backBtn"
+        app:layout_constraintBottom_toBottomOf="@id/backBtn"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
-            android:id="@+id/delete_btn"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/delete"
-            android:layout_marginEnd="8dp" />
 
-        <Button
-            android:id="@+id/back_btn"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/back"/>
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -15,32 +15,38 @@
         android:layout_gravity="bottom"
         android:layout_alignParentBottom="true">
 
-        <Button
+        <!-- Gallery Button -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/galleryBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginHorizontal="4dp"
-            android:background="@drawable/circle_button_background"
-            android:text="Gallery" />
+            android:text="Gallery"
+            android:textSize="18sp"
+            style="@style/Widget.Material3.Button" />
 
-        <Button
+        <!-- Photo Button -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/photoBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginHorizontal="4dp"
-            android:background="@drawable/circle_button_background"
-            android:text="Photo" />
+            android:text="Photo"
+            android:textSize="18sp"
+            style="@style/Widget.Material3.Button" />
 
-        <Button
+        <!-- Video Button -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/videoBtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginHorizontal="4dp"
-            android:background="@drawable/circle_button_background"
-            android:text="Video" />
+            android:text="Video"
+            android:textSize="18sp"
+            style="@style/Widget.Material3.Button" />
 
     </LinearLayout>
 

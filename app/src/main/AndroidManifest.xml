@@ -2,9 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-feature android:name="android.hardware.camera.any" />
-
     <uses-permission android:name="android.permission.CAMERA" />
-
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
@@ -14,24 +12,36 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DemoCamera">
+
+        <!-- Lock GalleryActivity in portrait mode -->
         <activity
             android:name=".GalleryActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
+
+        <!-- Lock VideoActivity in portrait mode -->
         <activity
             android:name=".VideoActivity"
+            android:screenOrientation="portrait"
             android:exported="false"/>
+
+        <!-- Lock FullScreenActivity in portrait mode -->
         <activity
             android:name=".FullScreenActivity"
+            android:screenOrientation="portrait"
             android:exported="false"/>
+
+        <!-- Lock MainActivity in portrait mode -->
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
