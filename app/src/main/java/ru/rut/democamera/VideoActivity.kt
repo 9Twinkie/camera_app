@@ -69,8 +69,10 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         binding.captureButton.setOnClickListener {
             if (recording == null) {
                 startRecording()
+                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
             } else {
                 stopRecording()
+                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
             }
         }
 

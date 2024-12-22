@@ -15,12 +15,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Capture Button (Start/Stop Recording) -->
-    <Button
+    <!-- Circular Capture Button for Video Recording -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/captureButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Recording"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:backgroundTint="?attr/colorPrimary"
+        app:icon="@drawable/ic_circle"
+        app:iconTint="@android:color/white"
+        android:foregroundGravity="center"
+        app:iconSize="48dp"
+        app:cornerRadius="40dp"
         app:layout_constraintBottom_toBottomOf="@id/preview"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -36,7 +41,6 @@
         android:src="@drawable/ic_switch"
         app:layout_constraintTop_toTopOf="@id/preview"
         app:layout_constraintEnd_toEndOf="@id/preview" />
-
 
     <FrameLayout
         android:id="@+id/navbarContainer"
