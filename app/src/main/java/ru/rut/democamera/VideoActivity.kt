@@ -57,15 +57,12 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Request necessary permissions
         requestPermissions()
 
-        // Add NavBarFragment to reuse buttons from the PhotoActivity
         supportFragmentManager.beginTransaction()
             .replace(binding.navbarContainer.id, NavBarFragment(this))
             .commit()
 
-        // Handle Capture button click (start or stop recording)
         binding.captureButton.setOnClickListener {
             if (recording == null) {
                 startRecording()
@@ -76,7 +73,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             }
         }
 
-        // Handle camera switch button click (switch between front and back cameras)
         binding.switchBtn.setOnClickListener {
             cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
                 CameraSelector.DEFAULT_FRONT_CAMERA
@@ -161,7 +157,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         recording = null
     }
 
-    // NavBarFragment listener methods
     override fun onGallerySelected() {
         finish()
         startActivity(Intent(this, GalleryActivity::class.java))
@@ -173,7 +168,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     override fun onVideoModeSelected() {
-        // Already in video mode, so do nothing
     }
 
     override fun onDestroy() {

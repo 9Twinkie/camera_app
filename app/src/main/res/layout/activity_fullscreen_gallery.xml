@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="0dp"
@@ -18,7 +17,6 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Back Button positioned at top-left -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/backBtn"
         android:layout_width="80dp"
@@ -34,7 +32,6 @@
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp" />
 
-    <!-- Delete Button positioned at top-right, aligned vertically with Back Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/delete_btn"
         android:layout_width="wrap_content"
@@ -46,7 +43,5 @@
         app:layout_constraintTop_toTopOf="@id/backBtn"
         app:layout_constraintBottom_toBottomOf="@id/backBtn"
         app:layout_constraintEnd_toEndOf="parent" />
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

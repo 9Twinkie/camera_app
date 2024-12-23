@@ -72,7 +72,6 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
         cameraPermissionResult.launch(android.Manifest.permission.CAMERA)
 
-        // Add reusable NavBarFragment
         supportFragmentManager.beginTransaction()
             .replace(binding.navbarContainer.id, NavBarFragment(this))
             .commit()
@@ -138,7 +137,6 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     override fun onPhotoModeSelected() {
-        // Already in photo mode
     }
 
     override fun onVideoModeSelected() {

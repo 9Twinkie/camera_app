@@ -41,7 +41,7 @@ class FullScreenActivity : AppCompatActivity() {
                         startActivity(Intent(this, GalleryActivity::class.java))
                     }
                 } else {
-                    Toast.makeText(this, "Не удалось удалить файл", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error deleting file", Toast.LENGTH_SHORT).show()
                 }
             }
         }
