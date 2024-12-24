@@ -60,8 +60,10 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         requestPermissions()
 
         supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this))
+            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.videoBtn))
             .commit()
+
+
 
         binding.captureButton.setOnClickListener {
             if (recording == null) {

@@ -73,8 +73,9 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         cameraPermissionResult.launch(android.Manifest.permission.CAMERA)
 
         supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this))
+            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.photoBtn))
             .commit()
+
 
         binding.captureButton.setOnClickListener {
             takePhoto()

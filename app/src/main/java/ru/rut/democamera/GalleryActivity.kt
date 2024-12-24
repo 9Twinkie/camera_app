@@ -24,8 +24,9 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
         val adapter = MediaGridAdapter(mediaFiles, this)
         binding.recyclerView.adapter = adapter
         supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this))
+            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.galleryBtn))
             .commit()
+
     }
 
     override fun onItemClick(position: Int) {
