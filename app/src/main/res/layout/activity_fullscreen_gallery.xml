@@ -28,29 +28,31 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/backBtn"
-            android:layout_width="60dp"
-            android:layout_height="50dp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             android:backgroundTint="?attr/colorPrimary"
             android:foregroundGravity="center"
             app:icon="@drawable/ic_arrow_left"
             app:iconTint="@android:color/white"
             app:iconSize="45dp"
-            app:cornerRadius="40dp"
+            app:cornerRadius="50dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:rippleColor="@color/purple_200"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/delete_btn"
-            android:layout_width="110dp"
-            android:layout_height="50dp"
+            android:layout_width="130dp"
+            android:layout_height="70dp"
             android:text="@string/delete"
-            android:textSize="14sp"
+            android:textSize="18sp"
             style="@style/Widget.Material3.Button"
-            app:cornerRadius="40dp"
+            app:cornerRadius="50dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:rippleColor="@color/purple_200"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
