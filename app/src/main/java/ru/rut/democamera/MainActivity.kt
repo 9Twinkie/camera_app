@@ -14,72 +14,50 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
-import com.google.android.material.snackbar.Snackbar
-import com.google.common.util.concurrent.ListenableFuture
 import ru.rut.democamera.databinding.ActivityMainBinding
+import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
+
     private lateinit var binding: ActivityMainBinding
-    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+    private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
     private var imageCapture: ImageCapture? = null
     private lateinit var imageCaptureExecutor: ExecutorService
-    private val cameraPermissionResult =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { permissionGranted ->
-            if (permissionGranted) {
-                startCamera()
+
+    private val requestPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
+                setupCameraProvider()
             } else {
-                Snackbar.make(
-                    binding.root,
-                    "The camera permission is necessary",
-                    Snackbar.LENGTH_INDEFINITE
-                ).show()
-
+                showPermissionDeniedDialog()
             }
         }
-
-    private fun startCamera() {
-        val preview = Preview.Builder().build().also {
-            it.surfaceProvider = binding.preview.surfaceProvider
-        }
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-
-            imageCapture = ImageCapture.Builder().build()
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-            } catch (e: Exception) {
-                Log.d("TAG", "Use case binding failed")
-            }
-        }, ContextCompat.getMainExecutor(this))
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
         imageCaptureExecutor = Executors.newSingleThreadExecutor()
 
-        cameraPermissionResult.launch(android.Manifest.permission.CAMERA)
+        checkAndRequestCameraPermission()
 
         supportFragmentManager.beginTransaction()
             .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.photoBtn))
             .commit()
 
-
         binding.captureButton.setOnClickListener {
-            takePhoto()
-            animateFlash()
+            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
+                takePhoto()
+                animateFlash()
+            } else {
+                checkAndRequestCameraPermission()
+            }
         }
 
         binding.switchBtn.setOnClickListener {
@@ -88,13 +66,60 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             } else {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
-            startCamera()
+            setupCameraProvider()
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        imageCaptureExecutor.shutdown()
+    private fun checkAndRequestCameraPermission() {
+        val missingPermissions = PermissionsUtil.getMissingPermissions(this, PermissionsUtil.PHOTO_PERMISSIONS)
+        if (missingPermissions.isNotEmpty()) {
+            PermissionsUtil.showRationaleDialog(
+                this,
+                "Camera access is required to take photos. Please grant the permission."
+            ) {
+                requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
+            }
+        } else {
+            setupCameraProvider()
+        }
+    }
+
+    private fun showPermissionDeniedDialog() {
+        PermissionsUtil.showRationaleDialog(
+            this,
+            "Camera access is required to take photos. Please enable it in the app settings."
+        ) {
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = android.net.Uri.parse("package:$packageName")
+            startActivity(intent)
+        }
+    }
+
+    private fun setupCameraProvider() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener({
+            try {
+                cameraProvider = cameraProviderFuture.get()
+                startCamera()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to get ProcessCameraProvider", e)
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun startCamera() {
+        val preview = Preview.Builder().build().also {
+            it.surfaceProvider = binding.preview.surfaceProvider
+        }
+
+        imageCapture = ImageCapture.Builder().build()
+
+        try {
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Use case binding failed", e)
+        }
     }
 
     private fun takePhoto() {
@@ -107,19 +132,16 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                 imageCaptureExecutor,
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        Log.i("TAG", "The image has been saved in ${file.toUri()}")
+                        Log.i("MainActivity", "Image saved at ${file.absolutePath}")
+                        Toast.makeText(this@MainActivity, "Photo saved!", Toast.LENGTH_SHORT).show()
                     }
 
                     override fun onError(exception: ImageCaptureException) {
-                        Toast.makeText(
-                            binding.root.context,
-                            "Error taking photo",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        Log.d("TAG", "Error taking photo:$exception")
+                        Log.e("MainActivity", "Error taking photo: $exception")
+                        Toast.makeText(this@MainActivity, "Error taking photo.", Toast.LENGTH_SHORT).show()
                     }
-
-                })
+                }
+            )
         }
     }
 
@@ -132,12 +154,18 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         }, 100)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        imageCaptureExecutor.shutdown()
+    }
+
     override fun onGallerySelected() {
         val intent = Intent(this, GalleryActivity::class.java)
         startActivity(intent)
     }
 
     override fun onPhotoModeSelected() {
+        // Already in Photo mode
     }
 
     override fun onVideoModeSelected() {

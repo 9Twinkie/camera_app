@@ -1,8 +1,6 @@
 package ru.rut.democamera
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -13,6 +11,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.core.content.ContextCompat
 import ru.rut.democamera.databinding.ActivityVideoBinding
+import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -26,26 +25,16 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var videoCapture: VideoCapture<Recorder>
     private lateinit var cameraExecutor: ExecutorService
 
-    private val TAG = "VideoActivity"
-
-    private val REQUIRED_PERMISSIONS = arrayOf(
-        Manifest.permission.CAMERA,
-        Manifest.permission.RECORD_AUDIO
-    )
-
     private val requestPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val cameraPermission = permissions[Manifest.permission.CAMERA] ?: false
-            val audioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: false
-
-            if (cameraPermission) {
-                startCamera()
+            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
+                setupCameraProvider()
             } else {
-                Toast.makeText(this, "Camera permission needed", Toast.LENGTH_SHORT).show()
-            }
-
-            if (!audioPermission) {
-                Toast.makeText(this, "Audio permission not granted. Video will have no sound.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Camera and audio permissions are required to record videos.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -57,18 +46,25 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        requestPermissions()
+        checkAndRequestPermissions()
 
         supportFragmentManager.beginTransaction()
             .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.videoBtn))
             .commit()
 
-
-
         binding.captureButton.setOnClickListener {
             if (recording == null) {
-                startRecording()
-                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
+                if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
+                    startRecording()
+                    binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Camera and audio permissions are required to record videos.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    checkAndRequestPermissions()
+                }
             } else {
                 stopRecording()
                 binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
@@ -81,44 +77,52 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             } else {
                 CameraSelector.DEFAULT_BACK_CAMERA
             }
-            startCamera()
+            setupCameraProvider()
         }
     }
 
-    private fun requestPermissions() {
-        val missingPermissions = REQUIRED_PERMISSIONS.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
+    private fun checkAndRequestPermissions() {
+        val missingPermissions = PermissionsUtil.getMissingPermissions(this, PermissionsUtil.VIDEO_PERMISSIONS)
         if (missingPermissions.isNotEmpty()) {
-            requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
+            PermissionsUtil.showRationaleDialog(
+                this,
+                "Camera and audio access are required to record videos. Please grant the permissions."
+            ) {
+                requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
+            }
         } else {
-            startCamera()
+            setupCameraProvider()
         }
+    }
+
+    private fun setupCameraProvider() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener({
+            try {
+                cameraProvider = cameraProviderFuture.get()
+                startCamera()
+            } catch (e: Exception) {
+                Log.e("VideoActivity", "Failed to get ProcessCameraProvider", e)
+            }
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
+        val preview = androidx.camera.core.Preview.Builder().build().also {
+            it.surfaceProvider = binding.preview.surfaceProvider
+        }
 
-            val preview = androidx.camera.core.Preview.Builder().build().also {
-                it.surfaceProvider = binding.preview.surfaceProvider
-            }
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HD))
+            .build()
+        videoCapture = VideoCapture.withOutput(recorder)
 
-            val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.HD))
-                .build()
-            videoCapture = VideoCapture.withOutput(recorder)
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
-
-        }, ContextCompat.getMainExecutor(this))
+        try {
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
+        } catch (exc: Exception) {
+            Log.e("VideoActivity", "Use case binding failed", exc)
+        }
     }
 
     private fun startRecording() {
@@ -126,32 +130,38 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         val file = File(externalMediaDirs[0], name)
         val outputOptions = FileOutputOptions.Builder(file).build()
 
-        recording = videoCapture.output
-            .prepareRecording(this, outputOptions)
-            .apply {
-                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                    withAudioEnabled()
-                } else {
-                    Toast.makeText(this@VideoActivity, "Audio permission not granted. Recording without sound.", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
-                when (recordEvent) {
-                    is VideoRecordEvent.Start -> {
-                        Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
-                        binding.captureButton.text = "Stop"
-                    }
-                    is VideoRecordEvent.Finalize -> {
-                        if (recordEvent.hasError()) {
-                            Toast.makeText(this, "Error: ${recordEvent.error}", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this, "Video saved: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
+        try {
+            recording = videoCapture.output
+                .prepareRecording(this, outputOptions)
+                .withAudioEnabled()
+                .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
+                    when (recordEvent) {
+                        is VideoRecordEvent.Start -> {
+                            Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
+                            binding.captureButton.text = "Stop"
                         }
-                        binding.captureButton.text = "Start"
-                        recording = null
+                        is VideoRecordEvent.Finalize -> {
+                            if (recordEvent.hasError()) {
+                                Toast.makeText(
+                                    this,
+                                    "Error: ${recordEvent.error}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this,
+                                    "Video saved: ${file.absolutePath}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            binding.captureButton.text = "Start"
+                            recording = null
+                        }
                     }
                 }
-            }
+        } catch (e: SecurityException) {
+            Toast.makeText(this, "Required permissions are missing.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun stopRecording() {
@@ -169,8 +179,7 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         startActivity(Intent(this, MainActivity::class.java))
     }
 
-    override fun onVideoModeSelected() {
-    }
+    override fun onVideoModeSelected() {}
 
     override fun onDestroy() {
         super.onDestroy()
