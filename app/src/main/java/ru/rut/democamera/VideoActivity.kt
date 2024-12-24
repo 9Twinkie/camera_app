@@ -26,7 +26,7 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var cameraExecutor: ExecutorService
 
     private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
                 setupCameraProvider()
             } else {
@@ -138,7 +138,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                     when (recordEvent) {
                         is VideoRecordEvent.Start -> {
                             Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
-                            binding.captureButton.text = "Stop"
                         }
                         is VideoRecordEvent.Finalize -> {
                             if (recordEvent.hasError()) {
@@ -154,7 +153,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                            binding.captureButton.text = "Start"
                             recording = null
                         }
                     }

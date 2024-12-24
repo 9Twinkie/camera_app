@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var imageCaptureExecutor: ExecutorService
 
     private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
                 setupCameraProvider()
             } else {

@@ -10,38 +10,47 @@
         android:layout_height="0dp"
         android:background="@android:color/black"
         android:clipToPadding="false"
-        android:paddingTop="96dp"
-    android:paddingBottom="16dp"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/backBtn"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:backgroundTint="?attr/colorPrimary"
-        android:foregroundGravity="center"
-        app:icon="@drawable/ic_arrow_left"
-        app:iconTint="@android:color/white"
-        app:iconSize="48dp"
-        app:cornerRadius="40dp"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/button_container"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/delete_btn"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/button_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:text="@string/delete"
-        android:textSize="18sp"
-        style="@style/Widget.Material3.Button"
-        app:layout_constraintTop_toTopOf="@id/backBtn"
-        app:layout_constraintBottom_toBottomOf="@id/backBtn"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/view_pager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="30dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/backBtn"
+            android:layout_width="60dp"
+            android:layout_height="50dp"
+            android:backgroundTint="?attr/colorPrimary"
+            android:foregroundGravity="center"
+            app:icon="@drawable/ic_arrow_left"
+            app:iconTint="@android:color/white"
+            app:iconSize="45dp"
+            app:cornerRadius="40dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/delete_btn"
+            android:layout_width="110dp"
+            android:layout_height="50dp"
+            android:text="@string/delete"
+            android:textSize="14sp"
+            style="@style/Widget.Material3.Button"
+            app:cornerRadius="40dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
