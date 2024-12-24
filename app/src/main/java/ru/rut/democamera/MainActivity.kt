@@ -133,12 +133,17 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                         Log.i("MainActivity", "Image saved at ${file.absolutePath}")
-                        Toast.makeText(this@MainActivity, "Photo saved!", Toast.LENGTH_SHORT).show()
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity, "Photo saved!", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
+
                     override fun onError(exception: ImageCaptureException) {
-                        Log.e("MainActivity", "Error taking photo: $exception")
-                        Toast.makeText(this@MainActivity, "Error taking photo.", Toast.LENGTH_SHORT).show()
+                        Log.e("MainActivity", "Error taking photo: ${exception.message}")
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity, "Error taking photo.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             )
@@ -165,7 +170,6 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     override fun onPhotoModeSelected() {
-        // Already in Photo mode
     }
 
     override fun onVideoModeSelected() {

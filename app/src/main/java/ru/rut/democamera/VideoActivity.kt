@@ -177,7 +177,9 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         startActivity(Intent(this, MainActivity::class.java))
     }
 
-    override fun onVideoModeSelected() {}
+    override fun onVideoModeSelected() {
+
+    }
 
     override fun onDestroy() {
         super.onDestroy()

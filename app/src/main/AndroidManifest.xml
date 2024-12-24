@@ -13,25 +13,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DemoCamera">
 
-        <!-- Lock GalleryActivity in portrait mode -->
         <activity
             android:name=".GalleryActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
 
-        <!-- Lock VideoActivity in portrait mode -->
         <activity
             android:name=".VideoActivity"
             android:screenOrientation="portrait"
             android:exported="false"/>
 
-        <!-- Lock FullScreenActivity in portrait mode -->
         <activity
             android:name=".FullScreenActivity"
             android:screenOrientation="portrait"
             android:exported="false"/>
 
-        <!-- Lock MainActivity in portrait mode -->
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
