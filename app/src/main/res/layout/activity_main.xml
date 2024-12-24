@@ -20,7 +20,7 @@
         android:layout_height="80dp"
         android:backgroundTint="?attr/colorPrimary"
         android:foregroundGravity="center"
-        app:icon="@drawable/ic_camera"
+        app:icon="@drawable/ic_circle"
         app:iconTint="@android:color/white"
         app:iconSize="48dp"
         app:cornerRadius="40dp"
