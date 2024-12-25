@@ -8,13 +8,11 @@
         android:id="@+id/view_pager"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@android:color/black"
-        android:clipToPadding="false"
+        android:background="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/button_container"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/button_container"
@@ -24,7 +22,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="30dp">
+        android:background="@android:color/white">
+
 
 
         <com.google.android.material.button.MaterialButton
@@ -33,6 +32,8 @@
             android:layout_height="70dp"
             android:backgroundTint="?attr/colorPrimary"
             android:foregroundGravity="center"
+            android:layout_marginBottom="20dp"
+            android:layout_marginStart="20dp"
             app:icon="@drawable/ic_arrow_left"
             app:iconTint="@android:color/white"
             app:iconSize="45dp"
@@ -40,7 +41,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:rippleColor="@color/purple_200"/>
+            app:rippleColor="@color/purple_200" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/delete_btn"
@@ -48,12 +49,14 @@
             android:layout_height="70dp"
             android:text="@string/delete"
             android:textSize="18sp"
+            android:layout_marginBottom="20dp"
+            android:layout_marginEnd="20dp"
             style="@style/Widget.Material3.Button"
             app:cornerRadius="50dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:rippleColor="@color/purple_200"/>
+            app:rippleColor="@color/purple_200" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

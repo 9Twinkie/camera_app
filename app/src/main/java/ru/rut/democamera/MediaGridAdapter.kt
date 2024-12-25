@@ -1,12 +1,12 @@
 package ru.rut.democamera
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import ru.rut.democamera.databinding.ItemMediaGridBinding
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 
 class MediaGridAdapter(
@@ -29,26 +29,25 @@ class MediaGridAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val file = files[position]
+        bindMediaData(holder, file)
+        holder.itemView.setOnClickListener { listener.onItemClick(position) }
+    }
 
+    private fun bindMediaData(holder: ViewHolder, file: File) {
         Glide.with(holder.binding.root)
             .load(file)
             .centerCrop()
             .into(holder.binding.mediaThumbnail)
 
-        val extension = file.extension.lowercase(Locale.getDefault())
-        val type = when (extension) {
-            in listOf("jpg", "jpeg", "png") -> "Photo"
-            in listOf("mp4", "mov") -> "Video"
-            else -> "Unknown"
-        }
-        holder.binding.mediaType.text = type
-
-        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-        val dateStr = sdf.format(Date(file.lastModified()))
-        holder.binding.mediaDate.text = dateStr
-
-        holder.itemView.setOnClickListener {
-            listener.onItemClick(position)
+        when (file.extension.lowercase(Locale.getDefault())) {
+            in listOf("jpg", "jpeg", "png") -> {
+                holder.binding.mediaType.visibility = View.GONE
+                holder.binding.videoIcon.visibility = View.GONE
+            }
+            in listOf("mp4", "mov") -> {
+                holder.binding.mediaType.visibility = View.GONE
+                holder.binding.videoIcon.visibility = View.VISIBLE
+            }
         }
     }
 }
