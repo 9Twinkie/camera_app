@@ -3,6 +3,7 @@ package ru.rut.democamera
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
@@ -48,9 +49,18 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         checkAndRequestPermissions()
         setupNavBar()
 
-        binding.preview.setOnTouchListener { _, event ->
-            camera?.let { CameraUtil.handleTouchEvent(event) } ?: false
+        binding.preview.setOnTouchListener { view, event ->
+            camera?.let {
+                CameraUtil.handleTouchEvent(event)
+            }
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                view.performClick()
+            }
+
+            true
         }
+
 
         binding.captureButton.setOnClickListener {
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
@@ -121,14 +131,21 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(this)) { event ->
                     when (event) {
-                        is VideoRecordEvent.Start -> CameraUtil.showToast(this, "Recording started.")
+                        is VideoRecordEvent.Start -> {
+                            CameraUtil.showToast(this, "Recording started.")
+                            binding.switchBtn.isEnabled = false
+                        }
                         is VideoRecordEvent.Finalize -> {
+                            binding.switchBtn.isEnabled = true
+                            recording = null
+
                             if (event.hasError()) {
-                                CameraUtil.showToast(this, "Error recording video.")
+                                if (!isFinishing) {
+                                    CameraUtil.showToast(this, "Error recording video.")
+                                }
                             } else {
                                 CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
                             }
-                            recording = null
                         }
                     }
                 }
@@ -136,6 +153,9 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             CameraUtil.showToast(this, "Permissions are missing.")
         }
     }
+
+
+
 
     private fun stopRecording() {
         recording?.stop()

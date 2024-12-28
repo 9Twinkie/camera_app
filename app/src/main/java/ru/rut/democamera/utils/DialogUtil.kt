@@ -10,7 +10,7 @@ object DialogUtil {
         AlertDialog.Builder(context)
             .setTitle("Permissions Required")
             .setMessage(message)
-            .setPositiveButton("Grant") { _, _ -> onGrant() }
+            .setPositiveButton("Grant") { dialogInterface, button -> onGrant() }
             .setNegativeButton("Cancel", null)
             .show()
     }
@@ -19,7 +19,7 @@ object DialogUtil {
         AlertDialog.Builder(context)
             .setTitle("Permission Denied")
             .setMessage("Camera access is required. Enable it in app settings.")
-            .setPositiveButton("Settings") { _, _ ->
+            .setPositiveButton("Settings") { dialogInterface, button ->
                 context.startActivity(
                     Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = android.net.Uri.parse("package:$packageName")

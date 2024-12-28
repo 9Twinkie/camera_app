@@ -3,6 +3,7 @@ package ru.rut.democamera
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -48,9 +49,18 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         checkAndRequestPermissions()
         setupNavBar()
 
-        binding.preview.setOnTouchListener { _, event ->
-            camera?.let { CameraUtil.handleTouchEvent(event) } ?: false
+        binding.preview.setOnTouchListener { view, event ->
+            camera?.let {
+                CameraUtil.handleTouchEvent(event)
+            }
+
+            if (event.action == MotionEvent.ACTION_UP) {
+                view.performClick()
+            }
+
+            true
         }
+
 
         binding.captureButton.setOnClickListener {
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
