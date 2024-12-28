@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import ru.rut.democamera.databinding.ActivityGalleryBinding
+import ru.rut.democamera.utils.GridSpacingItemDecoration
 import java.io.File
 
 class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListener, NavBarFragment.NavBarListener {
@@ -33,10 +34,12 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun setupRecyclerView() {
-        binding.recyclerView.layoutManager = GridLayoutManager(this, 3)
+        binding.recyclerView.layoutManager = GridLayoutManager(this,3)
+        binding.recyclerView.addItemDecoration(GridSpacingItemDecoration(3,16))
         mediaAdapter = MediaGridAdapter(mediaFiles, this)
         binding.recyclerView.adapter = mediaAdapter
     }
+
 
     private fun setupNavBar() {
         supportFragmentManager.beginTransaction()
