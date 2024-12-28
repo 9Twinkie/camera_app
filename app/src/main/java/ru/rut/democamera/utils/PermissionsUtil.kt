@@ -3,7 +3,6 @@ package ru.rut.democamera.utils
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 
 object PermissionsUtil {
@@ -28,16 +27,4 @@ object PermissionsUtil {
         }
     }
 
-    fun showRationaleDialog(
-        context: Context,
-        rationaleMessage: String,
-        onGrant: () -> Unit
-    ) {
-        AlertDialog.Builder(context)
-            .setTitle("Permissions Required")
-            .setMessage(rationaleMessage)
-            .setPositiveButton("Grant") { _, _ -> onGrant() }
-            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
 }

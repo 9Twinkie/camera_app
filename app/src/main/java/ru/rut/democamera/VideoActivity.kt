@@ -3,14 +3,16 @@ package ru.rut.democamera
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.core.content.ContextCompat
 import ru.rut.democamera.databinding.ActivityVideoBinding
+import ru.rut.democamera.utils.CameraUtil
+import ru.rut.democamera.utils.DialogUtil
 import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -24,17 +26,14 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private var recording: Recording? = null
     private lateinit var videoCapture: VideoCapture<Recorder>
     private lateinit var cameraExecutor: ExecutorService
+    private var camera: Camera? = null
 
     private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
                 setupCameraProvider()
             } else {
-                Toast.makeText(
-                    this,
-                    "Camera and audio permissions are required to record videos.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                DialogUtil.showPermissionDeniedDialog(this, packageName)
             }
         }
 
@@ -47,36 +46,29 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         checkAndRequestPermissions()
+        setupNavBar()
 
-        supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.videoBtn))
-            .commit()
+        binding.preview.setOnTouchListener { _, event ->
+            camera?.let { CameraUtil.handleTouchEvent(event) } ?: false
+        }
 
         binding.captureButton.setOnClickListener {
-            if (recording == null) {
-                if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
+            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
+                if (recording == null) {
                     startRecording()
                     binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Camera and audio permissions are required to record videos.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    checkAndRequestPermissions()
+                    stopRecording()
+                    binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
                 }
             } else {
-                stopRecording()
-                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
+                checkAndRequestPermissions()
             }
         }
 
+
         binding.switchBtn.setOnClickListener {
-            cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                CameraSelector.DEFAULT_BACK_CAMERA
-            }
+            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector)
             setupCameraProvider()
         }
     }
@@ -84,10 +76,7 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private fun checkAndRequestPermissions() {
         val missingPermissions = PermissionsUtil.getMissingPermissions(this, PermissionsUtil.VIDEO_PERMISSIONS)
         if (missingPermissions.isNotEmpty()) {
-            PermissionsUtil.showRationaleDialog(
-                this,
-                "Camera and audio access are required to record videos. Please grant the permissions."
-            ) {
+            DialogUtil.showRationaleDialog(this, "Camera and audio permissions are required.") {
                 requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
             }
         } else {
@@ -96,15 +85,10 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     private fun setupCameraProvider() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        cameraProviderFuture.addListener({
-            try {
-                cameraProvider = cameraProviderFuture.get()
-                startCamera()
-            } catch (e: Exception) {
-                Log.e("VideoActivity", "Failed to get ProcessCameraProvider", e)
-            }
-        }, ContextCompat.getMainExecutor(this))
+        CameraUtil.getCameraProvider(this) { provider ->
+            cameraProvider = provider
+            startCamera()
+        }
     }
 
     private fun startCamera() {
@@ -119,9 +103,10 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
+            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
+            camera?.let { CameraUtil.initPinchToZoom(this, it) }
         } catch (exc: Exception) {
-            Log.e("VideoActivity", "Use case binding failed", exc)
+            Log.e("VideoActivity", "Failed to bind camera use cases.", exc)
         }
     }
 
@@ -134,31 +119,21 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             recording = videoCapture.output
                 .prepareRecording(this, outputOptions)
                 .withAudioEnabled()
-                .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
-                    when (recordEvent) {
-                        is VideoRecordEvent.Start -> {
-                            Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
-                        }
+                .start(ContextCompat.getMainExecutor(this)) { event ->
+                    when (event) {
+                        is VideoRecordEvent.Start -> CameraUtil.showToast(this, "Recording started.")
                         is VideoRecordEvent.Finalize -> {
-                            if (recordEvent.hasError()) {
-                                Toast.makeText(
-                                    this,
-                                    "Error: ${recordEvent.error}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                            if (event.hasError()) {
+                                CameraUtil.showToast(this, "Error recording video.")
                             } else {
-                                Toast.makeText(
-                                    this,
-                                    "Video saved: ${file.absolutePath}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
                             }
                             recording = null
                         }
                     }
                 }
         } catch (e: SecurityException) {
-            Toast.makeText(this, "Required permissions are missing.", Toast.LENGTH_SHORT).show()
+            CameraUtil.showToast(this, "Permissions are missing.")
         }
     }
 
@@ -167,22 +142,21 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         recording = null
     }
 
+    private fun setupNavBar() {
+        supportFragmentManager.beginTransaction()
+            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.videoBtn))
+            .commit()
+    }
+
     override fun onGallerySelected() {
-        finish()
         startActivity(Intent(this, GalleryActivity::class.java))
+        finish()
     }
 
     override fun onPhotoModeSelected() {
-        finish()
         startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
-    override fun onVideoModeSelected() {
-
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-    }
+    override fun onVideoModeSelected() {}
 }

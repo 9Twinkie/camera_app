@@ -1,19 +1,20 @@
 package ru.rut.democamera
 
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.*
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.content.ContextCompat
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import ru.rut.democamera.databinding.ActivityMainBinding
-import ru.rut.democamera.utils.PermissionsUtil
+import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.DialogUtil
+import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -24,7 +25,8 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
     private var imageCapture: ImageCapture? = null
-    private lateinit var imageCaptureExecutor: ExecutorService
+    private lateinit var cameraExecutor: ExecutorService
+    private var camera: Camera? = null
 
     private val permissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -40,24 +42,16 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initCameraComponents()
-        setupNavBar()
-        setupListeners()
-    }
-
-    private fun initCameraComponents() {
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-        imageCaptureExecutor = Executors.newSingleThreadExecutor()
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
         checkAndRequestPermissions()
-    }
+        setupNavBar()
 
-    private fun setupNavBar() {
-        supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.photoBtn))
-            .commit()
-    }
+        binding.preview.setOnTouchListener { _, event ->
+            camera?.let { CameraUtil.handleTouchEvent(event) } ?: false
+        }
 
-    private fun setupListeners() {
         binding.captureButton.setOnClickListener {
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
                 capturePhoto()
@@ -68,7 +62,7 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         }
 
         binding.switchBtn.setOnClickListener {
-            toggleCameraSelector()
+            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector)
             setupCameraProvider()
         }
     }
@@ -88,29 +82,25 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     private fun setupCameraProvider() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        cameraProviderFuture.addListener({
-            try {
-                cameraProvider = cameraProviderFuture.get()
-                bindCameraUseCases()
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to get CameraProvider", e)
-            }
-        }, ContextCompat.getMainExecutor(this))
+        CameraUtil.getCameraProvider(this) { provider ->
+            cameraProvider = provider
+            bindCameraUseCases()
+        }
     }
 
     private fun bindCameraUseCases() {
-        val preview = Preview.Builder().build().apply {
-            surfaceProvider = binding.preview.surfaceProvider
+        val preview = androidx.camera.core.Preview.Builder().build().also {
+            it.surfaceProvider = binding.preview.surfaceProvider
         }
 
         imageCapture = ImageCapture.Builder().build()
 
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+            camera?.let { CameraUtil.initPinchToZoom(this, it) }
         } catch (e: Exception) {
-            Log.e("MainActivity", "Use case binding failed", e)
+            Log.e("MainActivity", "Failed to bind camera use cases.", e)
         }
     }
 
@@ -120,7 +110,7 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
         imageCapture?.takePicture(
             ImageCapture.OutputFileOptions.Builder(file).build(),
-            imageCaptureExecutor,
+            cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     runOnUiThread {
@@ -132,7 +122,7 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                     runOnUiThread {
                         Toast.makeText(this@MainActivity, "Failed to capture photo", Toast.LENGTH_SHORT).show()
                     }
-                    Log.e("MainActivity", "Capture failed", exception)
+                    Log.e("MainActivity", "Capture failed.", exception)
                 }
             }
         )
@@ -140,32 +130,26 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
     private fun animateFlashEffect() {
         binding.root.apply {
-            foreground = ColorDrawable(Color.WHITE)
+            foreground = android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
             postDelayed({ foreground = null }, 100)
         }
     }
 
-    private fun toggleCameraSelector() {
-        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-            CameraSelector.DEFAULT_FRONT_CAMERA
-        } else {
-            CameraSelector.DEFAULT_BACK_CAMERA
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        imageCaptureExecutor.shutdown()
+    private fun setupNavBar() {
+        supportFragmentManager.beginTransaction()
+            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.photoBtn))
+            .commit()
     }
 
     override fun onGallerySelected() {
         startActivity(Intent(this, GalleryActivity::class.java))
+        finish()
     }
 
-    override fun onPhotoModeSelected() {
-    }
+    override fun onPhotoModeSelected() {}
 
     override fun onVideoModeSelected() {
         startActivity(Intent(this, VideoActivity::class.java))
+        finish()
     }
 }
