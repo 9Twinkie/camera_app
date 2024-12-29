@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
@@ -28,6 +29,7 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private lateinit var videoCapture: VideoCapture<Recorder>
     private lateinit var cameraExecutor: ExecutorService
     private var camera: Camera? = null
+    private var isFlashEnabled = false
 
     private val requestPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -49,6 +51,13 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         checkAndRequestPermissions()
         setupNavBar()
 
+        binding.flashBtn.setOnClickListener {
+            isFlashEnabled = !isFlashEnabled
+            binding.flashBtn.setImageResource(
+                if (isFlashEnabled) R.drawable.ic_flash_state_on else R.drawable.ic_flash_state_off
+            )
+        }
+
         binding.preview.setOnTouchListener { view, event ->
             camera?.let {
                 CameraUtil.handleTouchEvent(event)
@@ -60,7 +69,6 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
             true
         }
-
 
         binding.captureButton.setOnClickListener {
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
@@ -76,11 +84,13 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
             }
         }
 
-
         binding.switchBtn.setOnClickListener {
-            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector)
+            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
+                binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
+            }
             setupCameraProvider()
         }
+
     }
 
     private fun checkAndRequestPermissions() {
@@ -125,7 +135,14 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         val file = File(externalMediaDirs[0], name)
         val outputOptions = FileOutputOptions.Builder(file).build()
 
+        if (isFlashEnabled) {
+            camera?.cameraControl?.enableTorch(true)
+        }
+
         try {
+
+            binding.flashBtn.isEnabled = false
+
             recording = videoCapture.output
                 .prepareRecording(this, outputOptions)
                 .withAudioEnabled()
@@ -139,6 +156,14 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                             binding.switchBtn.isEnabled = true
                             recording = null
 
+
+                            if (isFlashEnabled) {
+                                camera?.cameraControl?.enableTorch(false)
+                            }
+
+
+                            binding.flashBtn.isEnabled = true
+
                             if (event.hasError()) {
                                 if (!isFinishing) {
                                     CameraUtil.showToast(this, "Error recording video.")
@@ -150,16 +175,23 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                     }
                 }
         } catch (e: SecurityException) {
+            if (isFlashEnabled) {
+                camera?.cameraControl?.enableTorch(false)
+            }
+            binding.flashBtn.isEnabled = true
             CameraUtil.showToast(this, "Permissions are missing.")
         }
     }
 
-
-
-
     private fun stopRecording() {
         recording?.stop()
         recording = null
+
+        if (isFlashEnabled) {
+            camera?.cameraControl?.enableTorch(false)
+        }
+
+        binding.flashBtn.isEnabled = true
     }
 
     private fun setupNavBar() {

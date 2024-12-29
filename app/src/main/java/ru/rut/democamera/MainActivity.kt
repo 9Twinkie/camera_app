@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
     private var camera: Camera? = null
+    private var isFlashEnabled = false
 
     private val permissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -60,7 +62,12 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
             true
         }
-
+        binding.flashBtn.setOnClickListener {
+            isFlashEnabled = !isFlashEnabled
+            binding.flashBtn.setImageResource(
+                if (isFlashEnabled) R.drawable.ic_flash_state_on else R.drawable.ic_flash_state_off
+            )
+        }
 
         binding.captureButton.setOnClickListener {
             if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.PHOTO_PERMISSIONS)) {
@@ -72,9 +79,12 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         }
 
         binding.switchBtn.setOnClickListener {
-            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector)
+            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
+                binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
+            }
             setupCameraProvider()
         }
+
     }
 
     private fun checkAndRequestPermissions() {
@@ -118,18 +128,28 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         val fileName = "JPEG_${System.currentTimeMillis()}.jpg"
         val file = File(externalMediaDirs[0], fileName)
 
+        if (isFlashEnabled) {
+            camera?.cameraControl?.enableTorch(true)
+        }
+
         imageCapture?.takePicture(
             ImageCapture.OutputFileOptions.Builder(file).build(),
             cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     runOnUiThread {
+                        if (isFlashEnabled) {
+                            camera?.cameraControl?.enableTorch(false)
+                        }
                         Toast.makeText(this@MainActivity, "Photo saved: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     runOnUiThread {
+                        if (isFlashEnabled) {
+                            camera?.cameraControl?.enableTorch(false)
+                        }
                         Toast.makeText(this@MainActivity, "Failed to capture photo", Toast.LENGTH_SHORT).show()
                     }
                     Log.e("MainActivity", "Capture failed.", exception)

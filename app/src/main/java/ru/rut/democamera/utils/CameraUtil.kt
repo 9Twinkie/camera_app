@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.widget.Toast
 import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 
@@ -31,12 +32,21 @@ object CameraUtil {
         }
     }
 
-    fun toggleCameraSelector(currentSelector: androidx.camera.core.CameraSelector): androidx.camera.core.CameraSelector {
-        return if (currentSelector == androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA) {
-            androidx.camera.core.CameraSelector.DEFAULT_FRONT_CAMERA
+    fun toggleCameraSelector(
+        currentSelector: CameraSelector,
+        onCameraChanged: (Boolean) -> Unit
+    ): CameraSelector {
+        val newSelector = if (currentSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
         } else {
-            androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+            CameraSelector.DEFAULT_BACK_CAMERA
         }
+        onCameraChanged(isFrontCamera(newSelector))
+        return newSelector
+    }
+
+    private fun isFrontCamera(cameraSelector: CameraSelector): Boolean {
+        return cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
     }
 
     fun initPinchToZoom(context: Context, camera: Camera) {
