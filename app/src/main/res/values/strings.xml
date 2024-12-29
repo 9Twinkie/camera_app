@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DemoCamera</string>
+    <string name="app_name">Camera</string>
     <string name="gallery">Gallery</string>
     <string name="switch_cam">Switch</string>
     <string name="photo">Photo</string>
