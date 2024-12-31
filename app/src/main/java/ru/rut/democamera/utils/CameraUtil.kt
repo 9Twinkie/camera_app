@@ -50,22 +50,25 @@ object CameraUtil {
     }
 
     fun initPinchToZoom(context: Context, camera: Camera) {
-        scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            override fun onScale(detector: ScaleGestureDetector): Boolean {
-                currentZoomRatio *= detector.scaleFactor
-                val clampedZoomRatio = currentZoomRatio.coerceIn(
-                    camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1.0f,
-                    camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 4.0f
-                )
-                camera.cameraControl.setZoomRatio(clampedZoomRatio)
-                currentZoomRatio = clampedZoomRatio
-                return true
-            }
-        })
+        scaleGestureDetector = ScaleGestureDetector(
+            context,
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    currentZoomRatio *= detector.scaleFactor
+                    val clampedZoomRatio = currentZoomRatio.coerceIn(
+                        camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1.0f,
+                        camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 4.0f
+                    )
+                    camera.cameraControl.setZoomRatio(clampedZoomRatio)
+                    currentZoomRatio = clampedZoomRatio
+                    return true
+                }
+            })
     }
 
     fun handleTouchEvent(event: MotionEvent): Boolean {
         scaleGestureDetector?.onTouchEvent(event)
         return true
     }
+
 }

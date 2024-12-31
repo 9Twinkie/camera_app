@@ -94,13 +94,14 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     private fun checkAndRequestPermissions() {
-        val missingPermissions = PermissionsUtil.getMissingPermissions(this, PermissionsUtil.VIDEO_PERMISSIONS)
-        if (missingPermissions.isNotEmpty()) {
-            DialogUtil.showRationaleDialog(this, "Camera and audio permissions are required.") {
-                requestPermissionsLauncher.launch(missingPermissions.toTypedArray())
-            }
-        } else {
-            setupCameraProvider()
+        PermissionsUtil.handlePermissions(
+            this,
+            PermissionsUtil.VIDEO_PERMISSIONS,
+            requestPermissionsLauncher,
+            "Camera and audio permissions are required.",
+            ::setupCameraProvider
+        ) { message, onConfirm ->
+            DialogUtil.showRationaleDialog(this, message, onConfirm)
         }
     }
 

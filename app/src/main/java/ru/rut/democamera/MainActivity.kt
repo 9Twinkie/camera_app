@@ -88,18 +88,18 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     private fun checkAndRequestPermissions() {
-        val missingPermissions = PermissionsUtil.getMissingPermissions(this, PermissionsUtil.PHOTO_PERMISSIONS)
-        if (missingPermissions.isNotEmpty()) {
-            DialogUtil.showRationaleDialog(
-                this,
-                "Camera access is required to take photos. Please grant the permission."
-            ) {
-                permissionsLauncher.launch(missingPermissions.toTypedArray())
-            }
-        } else {
-            setupCameraProvider()
+        PermissionsUtil.handlePermissions(
+            this,
+            PermissionsUtil.PHOTO_PERMISSIONS,
+            permissionsLauncher,
+            "Camera access is required to take photos. Please grant the permission.",
+            ::setupCameraProvider
+        ) { message, onConfirm ->
+            DialogUtil.showRationaleDialog(this, message, onConfirm)
         }
     }
+
+
 
     private fun setupCameraProvider() {
         CameraUtil.getCameraProvider(this) { provider ->
