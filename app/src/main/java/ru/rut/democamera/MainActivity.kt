@@ -1,7 +1,6 @@
 package ru.rut.democamera
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import ru.rut.democamera.databinding.ActivityMainBinding
@@ -56,26 +55,38 @@ class MainActivity : BaseCameraActivity() {
     }
 
     private fun capturePhotoWithFlash() {
-        CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
-            capturePhoto()
+        attemptActionOrRequestPermissions {
+            CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
+                capturePhoto()
+            }
+        }
+    }
+    private fun animateFlashEffect() {
+        binding.root.apply {
+            foreground = android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
+            postDelayed({ foreground = null }, 100)
         }
     }
 
     private fun capturePhoto() {
         val file = File(externalMediaDirs.first(), "JPEG_${System.currentTimeMillis()}.jpg")
+        animateFlashEffect()
         imageCapture?.takePicture(
+
             ImageCapture.OutputFileOptions.Builder(file).build(),
             cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
+
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Photo saved: ${file.absolutePath}", Toast.LENGTH_SHORT).show()
+                        CameraUtil.showToast(this@MainActivity, "Photo saved: ${file.absolutePath}")
                     }
+
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Failed to capture photo", Toast.LENGTH_SHORT).show()
+                        CameraUtil.showToast(this@MainActivity, "Failed to capture photo")
                     }
                 }
             }

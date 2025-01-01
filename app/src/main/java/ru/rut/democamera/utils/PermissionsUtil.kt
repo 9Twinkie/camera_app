@@ -3,7 +3,6 @@ package ru.rut.democamera.utils
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 
 object PermissionsUtil {
@@ -19,29 +18,6 @@ object PermissionsUtil {
     fun arePermissionsGranted(context: Context, permissions: Array<String>): Boolean {
         return permissions.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
-    private fun getMissingPermissions(context: Context, permissions: Array<String>): List<String> {
-        return permissions.filter {
-            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-        }
-    }
-    fun handlePermissions(
-        context: Context,
-        permissions: Array<String>,
-        launcher: ActivityResultLauncher<Array<String>>,
-        rationaleMessage: String,
-        onAllGranted: () -> Unit,
-        showDialog: (String, () -> Unit) -> Unit
-    ) {
-        val missingPermissions = getMissingPermissions(context, permissions)
-        if (missingPermissions.isNotEmpty()) {
-            showDialog(rationaleMessage) {
-                launcher.launch(missingPermissions.toTypedArray())
-            }
-        } else {
-            onAllGranted()
         }
     }
 

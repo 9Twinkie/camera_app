@@ -49,14 +49,22 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     }
 
     protected fun checkAndRequestPermissions() {
-        PermissionsUtil.handlePermissions(
-            this,
-            requiredPermissions(),
-            permissionsLauncher,
-            rationaleMessage(),
-            ::onPermissionsGranted
-        ) { message, onConfirm ->
-            DialogUtil.showRationaleDialog(this, message, onConfirm)
+        if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+            onPermissionsGranted()
+        } else {
+            DialogUtil.showRationaleDialog(this, rationaleMessage()) {
+                permissionsLauncher.launch(requiredPermissions())
+            }
+        }
+    }
+
+    protected fun attemptActionOrRequestPermissions(action: () -> Unit) {
+        if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+            action()
+        } else {
+            DialogUtil.showRationaleDialog(this, rationaleMessage()) {
+                permissionsLauncher.launch(requiredPermissions())
+            }
         }
     }
 

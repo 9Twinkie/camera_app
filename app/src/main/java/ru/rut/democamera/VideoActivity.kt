@@ -66,14 +66,16 @@ class VideoActivity : BaseCameraActivity() {
     }
 
     private fun toggleRecording() {
-        if (recording == null) {
-            startRecording()
-            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
-            CameraUtil.enableTorchOnRecording(camera, true, isFlashEnabled)
-        } else {
-            stopRecording()
-            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
-            CameraUtil.enableTorchOnRecording(camera, false, isFlashEnabled)
+        attemptActionOrRequestPermissions {
+            if (recording == null) {
+                startRecording()
+                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
+                CameraUtil.enableTorchOnRecording(camera, true, isFlashEnabled)
+            } else {
+                stopRecording()
+                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
+                CameraUtil.enableTorchOnRecording(camera, false, isFlashEnabled)
+            }
         }
     }
 
