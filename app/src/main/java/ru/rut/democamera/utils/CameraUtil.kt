@@ -12,6 +12,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 
 object CameraUtil {
+
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var currentZoomRatio: Float = 1.0f
 
@@ -20,6 +21,28 @@ object CameraUtil {
         cameraProviderFuture.addListener({
             callback(cameraProviderFuture.get())
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    fun enableTorchOnRecording(camera: Camera?, isRecording: Boolean, flashEnabled: Boolean) {
+        if (flashEnabled && isRecording) {
+            camera?.cameraControl?.enableTorch(true)
+        } else if (flashEnabled) {
+            camera?.cameraControl?.enableTorch(false)
+        }
+    }
+
+    fun controlFlashDuringAction(
+        camera: Camera?,
+        flashEnabled: Boolean,
+        onActionCompleted: () -> Unit
+    ) {
+        if (flashEnabled) {
+            camera?.cameraControl?.enableTorch(true)
+        }
+        onActionCompleted()
+        if (flashEnabled) {
+            camera?.cameraControl?.enableTorch(false)
+        }
     }
 
     fun showToast(context: Context, message: String) {
@@ -70,5 +93,4 @@ object CameraUtil {
         scaleGestureDetector?.onTouchEvent(event)
         return true
     }
-
 }

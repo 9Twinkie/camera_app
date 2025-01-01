@@ -1,40 +1,31 @@
 package ru.rut.democamera
 
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.view.MotionEvent
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.*
+import androidx.camera.core.Preview
+import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import ru.rut.democamera.databinding.ActivityVideoBinding
 import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.DialogUtil
 import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
-class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
+class VideoActivity : BaseCameraActivity() {
 
     private lateinit var binding: ActivityVideoBinding
-    private lateinit var cameraProvider: ProcessCameraProvider
-    private lateinit var cameraSelector: CameraSelector
-    private var recording: Recording? = null
     private lateinit var videoCapture: VideoCapture<Recorder>
-    private lateinit var cameraExecutor: ExecutorService
-    private var camera: Camera? = null
-    private var isFlashEnabled = false
+    private var recording: Recording? = null
 
-    private val requestPermissionsLauncher =
+    private val permissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
-                setupCameraProvider()
+            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+                onPermissionsGranted()
             } else {
                 DialogUtil.showPermissionDeniedDialog(this, packageName)
             }
@@ -45,103 +36,68 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         binding = ActivityVideoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-        cameraExecutor = Executors.newSingleThreadExecutor()
-
-        checkAndRequestPermissions()
-        setupNavBar()
-
-        binding.flashBtn.setOnClickListener {
-            isFlashEnabled = !isFlashEnabled
-            binding.flashBtn.setImageResource(
-                if (isFlashEnabled) R.drawable.ic_flash_state_on else R.drawable.ic_flash_state_off
-            )
-        }
+        checkAndRequestPermissions(permissionsLauncher)
+        setupNavBar(R.id.videoBtn)
 
         binding.preview.setOnTouchListener { view, event ->
-            camera?.let {
-                CameraUtil.handleTouchEvent(event)
-            }
-
-            if (event.action == MotionEvent.ACTION_UP) {
-                view.performClick()
-            }
-
-            true
+            handleTouchEvent(view, event)
         }
-
-        binding.captureButton.setOnClickListener {
-            if (PermissionsUtil.arePermissionsGranted(this, PermissionsUtil.VIDEO_PERMISSIONS)) {
-                if (recording == null) {
-                    startRecording()
-                    binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
-                } else {
-                    stopRecording()
-                    binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
-                }
-            } else {
-                checkAndRequestPermissions()
-            }
+        binding.flashBtn.setOnClickListener {
+            toggleFlash(binding.flashBtn)
         }
-
-        binding.switchBtn.setOnClickListener {
-            cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
-                binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
-            }
-            setupCameraProvider()
-        }
-
+        binding.captureButton.setOnClickListener { toggleRecording() }
+        binding.switchBtn.setOnClickListener { switchCamera() }
     }
 
-    private fun checkAndRequestPermissions() {
-        PermissionsUtil.handlePermissions(
-            this,
-            PermissionsUtil.VIDEO_PERMISSIONS,
-            requestPermissionsLauncher,
-            "Camera and audio permissions are required.",
-            ::setupCameraProvider
-        ) { message, onConfirm ->
-            DialogUtil.showRationaleDialog(this, message, onConfirm)
-        }
-    }
+    override fun requiredPermissions() = PermissionsUtil.VIDEO_PERMISSIONS
 
-    private fun setupCameraProvider() {
+    override fun rationaleMessage() = "Camera and audio access are required to record videos."
+
+    override fun onPermissionsGranted() {
         CameraUtil.getCameraProvider(this) { provider ->
             cameraProvider = provider
-            startCamera()
+            bindCameraUseCases()
         }
     }
 
-    private fun startCamera() {
-        val preview = androidx.camera.core.Preview.Builder().build().also {
+    private fun bindCameraUseCases() {
+        val preview = Preview.Builder().build().also {
             it.surfaceProvider = binding.preview.surfaceProvider
         }
 
         val recorder = Recorder.Builder()
-            .setQualitySelector(QualitySelector.from(Quality.HD))
+            .setQualitySelector(
+                androidx.camera.video.QualitySelector.from(androidx.camera.video.Quality.HD)
+            )
             .build()
         videoCapture = VideoCapture.withOutput(recorder)
 
         try {
             cameraProvider.unbindAll()
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
-            camera?.let { CameraUtil.initPinchToZoom(this, it) }
-        } catch (exc: Exception) {
-            Log.e("VideoActivity", "Failed to bind camera use cases.", exc)
+            CameraUtil.initPinchToZoom(this, camera!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun toggleRecording() {
+        if (recording == null) {
+            startRecording()
+            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
+            CameraUtil.enableTorchOnRecording(camera, true, isFlashEnabled)
+        } else {
+            stopRecording()
+            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
+            CameraUtil.enableTorchOnRecording(camera, false, isFlashEnabled)
         }
     }
 
     private fun startRecording() {
-        val name = "VID_${System.currentTimeMillis()}.mp4"
-        val file = File(externalMediaDirs[0], name)
+        val file = File(externalMediaDirs.first(), "VID_${System.currentTimeMillis()}.mp4")
         val outputOptions = FileOutputOptions.Builder(file).build()
 
-        if (isFlashEnabled) {
-            camera?.cameraControl?.enableTorch(true)
-        }
-
         try {
-
             binding.flashBtn.isEnabled = false
 
             recording = videoCapture.output
@@ -153,33 +109,10 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
                             CameraUtil.showToast(this, "Recording started.")
                             binding.switchBtn.isEnabled = false
                         }
-                        is VideoRecordEvent.Finalize -> {
-                            binding.switchBtn.isEnabled = true
-                            recording = null
-
-
-                            if (isFlashEnabled) {
-                                camera?.cameraControl?.enableTorch(false)
-                            }
-
-
-                            binding.flashBtn.isEnabled = true
-
-                            if (event.hasError()) {
-                                if (!isFinishing) {
-                                    CameraUtil.showToast(this, "Error recording video.")
-                                }
-                            } else {
-                                CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
-                            }
-                        }
+                        is VideoRecordEvent.Finalize -> handleRecordingFinalized(event, file)
                     }
                 }
         } catch (e: SecurityException) {
-            if (isFlashEnabled) {
-                camera?.cameraControl?.enableTorch(false)
-            }
-            binding.flashBtn.isEnabled = true
             CameraUtil.showToast(this, "Permissions are missing.")
         }
     }
@@ -187,29 +120,25 @@ class VideoActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     private fun stopRecording() {
         recording?.stop()
         recording = null
-
-        if (isFlashEnabled) {
-            camera?.cameraControl?.enableTorch(false)
-        }
-
         binding.flashBtn.isEnabled = true
     }
 
-    private fun setupNavBar() {
-        supportFragmentManager.beginTransaction()
-            .replace(binding.navbarContainer.id, NavBarFragment(this, R.id.videoBtn))
-            .commit()
+    private fun handleRecordingFinalized(event: VideoRecordEvent.Finalize, file: File) {
+        binding.switchBtn.isEnabled = true
+        recording = null
+        binding.flashBtn.isEnabled = true
+
+        if (event.hasError()) {
+            CameraUtil.showToast(this, "Error recording video.")
+        } else {
+            CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
+        }
     }
 
-    override fun onGallerySelected() {
-        startActivity(Intent(this, GalleryActivity::class.java))
-        finish()
+    private fun switchCamera() {
+        cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
+            binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
+        }
+        onPermissionsGranted()
     }
-
-    override fun onPhotoModeSelected() {
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
-    }
-
-    override fun onVideoModeSelected() {}
 }
