@@ -1,5 +1,3 @@
-
-
 package ru.rut.democamera
 
 import android.content.Intent
@@ -8,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -22,6 +21,7 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
 
     protected lateinit var cameraProvider: ProcessCameraProvider
     protected lateinit var cameraExecutor: ExecutorService
+    private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
     protected var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     protected var camera: Camera? = null
     protected var isFlashEnabled = false
@@ -33,11 +33,22 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
+        initPermissionLauncher()
     }
 
-    protected fun checkAndRequestPermissions(
-        permissionsLauncher: ActivityResultLauncher<Array<String>>
-    ) {
+    private fun initPermissionLauncher() {
+        permissionsLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+                onPermissionsGranted()
+            } else {
+                DialogUtil.showPermissionDeniedDialog(this, packageName)
+            }
+        }
+    }
+
+    protected fun checkAndRequestPermissions() {
         PermissionsUtil.handlePermissions(
             this,
             requiredPermissions(),
@@ -53,6 +64,31 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         supportFragmentManager.beginTransaction()
             .replace(R.id.navbarContainer, NavBarFragment(this, defaultButtonId))
             .commit()
+    }
+
+    protected fun toggleFlash(flashButton: View) {
+        val flashOnIcon = R.drawable.ic_flash_state_on
+        val flashOffIcon = R.drawable.ic_flash_state_off
+
+        isFlashEnabled = !isFlashEnabled
+        (flashButton as? ImageButton)?.setImageResource(
+            if (isFlashEnabled) flashOnIcon else flashOffIcon
+        )
+    }
+
+    protected fun switchCamera(flashButton: ImageButton) {
+        cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
+            flashButton.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
+        }
+        onPermissionsGranted()
+    }
+
+    protected fun handleTouchEvent(view: View, event: MotionEvent): Boolean {
+        camera?.let { CameraUtil.handleTouchEvent(event) }
+        if (event.action == MotionEvent.ACTION_UP) {
+            view.performClick()
+        }
+        return true
     }
 
     override fun onGallerySelected() {
@@ -73,23 +109,4 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
             finish()
         }
     }
-    protected fun toggleFlash(flashButton: View) {
-        val flashOnIcon = R.drawable.ic_flash_state_on
-        val flashOffIcon = R.drawable.ic_flash_state_off
-
-        isFlashEnabled = !isFlashEnabled
-        (flashButton as? ImageButton)?.setImageResource(
-            if (isFlashEnabled) flashOnIcon else flashOffIcon
-        )
-    }
-
-    protected fun handleTouchEvent(view: View, event: MotionEvent): Boolean {
-        camera?.let { CameraUtil.handleTouchEvent(event) }
-        if (event.action == MotionEvent.ACTION_UP) {
-            view.performClick()
-        }
-        return true
-    }
-
-
 }

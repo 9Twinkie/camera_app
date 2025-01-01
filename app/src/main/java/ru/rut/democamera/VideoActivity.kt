@@ -1,8 +1,6 @@
 package ru.rut.democamera
 
 import android.os.Bundle
-import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Preview
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Recorder
@@ -12,7 +10,6 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import ru.rut.democamera.databinding.ActivityVideoBinding
 import ru.rut.democamera.utils.CameraUtil
-import ru.rut.democamera.utils.DialogUtil
 import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 
@@ -22,31 +19,18 @@ class VideoActivity : BaseCameraActivity() {
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var recording: Recording? = null
 
-    private val permissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
-                onPermissionsGranted()
-            } else {
-                DialogUtil.showPermissionDeniedDialog(this, packageName)
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVideoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        checkAndRequestPermissions(permissionsLauncher)
+        checkAndRequestPermissions()
         setupNavBar(R.id.videoBtn)
 
-        binding.preview.setOnTouchListener { view, event ->
-            handleTouchEvent(view, event)
-        }
-        binding.flashBtn.setOnClickListener {
-            toggleFlash(binding.flashBtn)
-        }
+        binding.preview.setOnTouchListener { view, event -> handleTouchEvent(view, event) }
+        binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
         binding.captureButton.setOnClickListener { toggleRecording() }
-        binding.switchBtn.setOnClickListener { switchCamera() }
+        binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
     }
 
     override fun requiredPermissions() = PermissionsUtil.VIDEO_PERMISSIONS
@@ -133,12 +117,5 @@ class VideoActivity : BaseCameraActivity() {
         } else {
             CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
         }
-    }
-
-    private fun switchCamera() {
-        cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
-            binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
-        }
-        onPermissionsGranted()
     }
 }

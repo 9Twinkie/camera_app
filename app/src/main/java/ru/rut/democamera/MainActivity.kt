@@ -1,14 +1,11 @@
 package ru.rut.democamera
 
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import ru.rut.democamera.databinding.ActivityMainBinding
 import ru.rut.democamera.utils.CameraUtil
-import ru.rut.democamera.utils.DialogUtil
 import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 
@@ -17,32 +14,18 @@ class MainActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
 
-    private val permissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
-                onPermissionsGranted()
-            } else {
-                DialogUtil.showPermissionDeniedDialog(this, packageName)
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        checkAndRequestPermissions(permissionsLauncher)
+        checkAndRequestPermissions()
         setupNavBar(R.id.photoBtn)
 
-        binding.preview.setOnTouchListener { view, event ->
-            handleTouchEvent(view, event)
-        }
-
-        binding.flashBtn.setOnClickListener {
-            toggleFlash(binding.flashBtn)
-        }
+        binding.preview.setOnTouchListener { view, event -> handleTouchEvent(view, event) }
+        binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
         binding.captureButton.setOnClickListener { capturePhotoWithFlash() }
-        binding.switchBtn.setOnClickListener { switchCamera() }
+        binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
     }
 
     override fun requiredPermissions() = PermissionsUtil.PHOTO_PERMISSIONS
@@ -97,12 +80,5 @@ class MainActivity : BaseCameraActivity() {
                 }
             }
         )
-    }
-
-    private fun switchCamera() {
-        cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFrontCamera ->
-            binding.flashBtn.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
-        }
-        onPermissionsGranted()
     }
 }
