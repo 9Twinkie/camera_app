@@ -26,7 +26,6 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     protected var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     protected var camera: Camera? = null
     protected var isFlashEnabled = false
-
     abstract val requiredPermissions: Array<String>
     abstract val rationaleMessage: String
 
@@ -48,7 +47,8 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         }
     }
 
-    protected open fun onPermissionsGranted() {}
+    protected open fun onPermissionsGranted() {
+    }
 
     protected fun checkAndRequestPermissions(action: () -> Unit) {
         if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions)) {

@@ -83,7 +83,4 @@ object CameraUtil {
             }
         }
     }
-    fun updateTorch(camera: Camera?, enable: Boolean) {
-        camera?.cameraControl?.enableTorch(enable)
-    }
 }

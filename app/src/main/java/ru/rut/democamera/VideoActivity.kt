@@ -9,6 +9,7 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import ru.rut.democamera.databinding.ActivityVideoBinding
 import ru.rut.democamera.utils.CameraUtil
+import ru.rut.democamera.utils.DialogUtil
 import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 
@@ -17,7 +18,6 @@ class VideoActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityVideoBinding
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var recording: Recording? = null
-
     override val requiredPermissions = PermissionsUtil.VIDEO_PERMISSIONS
     override val rationaleMessage = "Camera and audio access are required to record videos."
 
@@ -25,10 +25,8 @@ class VideoActivity : BaseCameraActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityVideoBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         checkAndRequestPermissions { onPermissionsGranted() }
         setupNavBar(R.id.videoBtn)
-
         setupListeners()
     }
 
@@ -40,6 +38,7 @@ class VideoActivity : BaseCameraActivity() {
     }
 
     override fun onPermissionsGranted() {
+        super.onPermissionsGranted()
         CameraUtil.getCameraProvider(this) { provider ->
             cameraProvider = provider
             setupCamera(binding.preview.surfaceProvider) {
@@ -51,16 +50,20 @@ class VideoActivity : BaseCameraActivity() {
     }
 
     private fun toggleRecording() {
-        if (recording == null) {
-            startRecording()
-            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
-            binding.flashBtn.isEnabled = false
-            binding.switchBtn.isEnabled = false
-        } else {
-            stopRecording()
-            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
-            binding.flashBtn.isEnabled = true
-            binding.switchBtn.isEnabled = true
+        checkAndRequestPermissions {
+            if (recording == null) {
+                startRecording()
+                binding.captureButton.icon =
+                    ContextCompat.getDrawable(this, R.drawable.ic_square)
+                binding.flashBtn.isEnabled = false
+                binding.switchBtn.isEnabled = false
+            } else {
+                stopRecording()
+                binding.captureButton.icon =
+                    ContextCompat.getDrawable(this, R.drawable.ic_circle)
+                binding.flashBtn.isEnabled = true
+                binding.switchBtn.isEnabled = true
+            }
         }
     }
 
@@ -75,13 +78,19 @@ class VideoActivity : BaseCameraActivity() {
 
         try {
             camera?.cameraControl?.enableTorch(isFlashEnabled)
-            recording = videoCapture.output.prepareRecording(this, outputOptions)
+
+            recording = videoCapture.output
+                .prepareRecording(this, outputOptions)
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(this)) { event ->
-                    if (event is VideoRecordEvent.Finalize) handleRecordingFinalized(event, file)
+                    if (event is VideoRecordEvent.Finalize) {
+                        handleRecordingFinalized(event, file)
+                    }
                 }
-        } catch (e: SecurityException) {
-            CameraUtil.showToast(this, "Permissions are missing.")
+
+        } catch (se: SecurityException) {
+            CameraUtil.showToast(this, "SecurityException: Missing required permissions.")
+            DialogUtil.showPermissionDeniedDialog(this, packageName)
         }
     }
 
@@ -99,4 +108,3 @@ class VideoActivity : BaseCameraActivity() {
         }
     }
 }
-

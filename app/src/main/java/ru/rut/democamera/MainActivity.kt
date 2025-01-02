@@ -11,7 +11,6 @@ class MainActivity : BaseCameraActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
-
     override val requiredPermissions = PermissionsUtil.PHOTO_PERMISSIONS
     override val rationaleMessage = "Camera access is required to take photos."
 
@@ -19,10 +18,8 @@ class MainActivity : BaseCameraActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         checkAndRequestPermissions { onPermissionsGranted() }
         setupNavBar(R.id.photoBtn)
-
         setupListeners()
     }
 
@@ -34,6 +31,7 @@ class MainActivity : BaseCameraActivity() {
     }
 
     override fun onPermissionsGranted() {
+        super.onPermissionsGranted()
         CameraUtil.getCameraProvider(this) { provider ->
             cameraProvider = provider
             setupCamera(binding.preview.surfaceProvider) {
@@ -44,25 +42,35 @@ class MainActivity : BaseCameraActivity() {
     }
 
     private fun capturePhoto() {
-        val file = CameraUtil.generateOutputFile(this, "JPEG")
-        CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
-            imageCapture?.takePicture(
-                ImageCapture.OutputFileOptions.Builder(file).build(),
-                cameraExecutor,
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        runOnUiThread {
-                            CameraUtil.showToast(this@MainActivity, "Photo saved: ${file.absolutePath}")
+        checkAndRequestPermissions {
+            val file = CameraUtil.generateOutputFile(this, "JPEG")
+            CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
+                imageCapture?.takePicture(
+                    ImageCapture.OutputFileOptions.Builder(file).build(),
+                    cameraExecutor,
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(
+                            outputFileResults: ImageCapture.OutputFileResults
+                        ) {
+                            runOnUiThread {
+                                CameraUtil.showToast(
+                                    this@MainActivity,
+                                    "Photo saved: ${file.absolutePath}"
+                                )
+                            }
                         }
-                    }
 
-                    override fun onError(exception: ImageCaptureException) {
-                        runOnUiThread {
-                            CameraUtil.showToast(this@MainActivity, "Failed to capture photo.")
+                        override fun onError(exception: ImageCaptureException) {
+                            runOnUiThread {
+                                CameraUtil.showToast(
+                                    this@MainActivity,
+                                    "Failed to capture photo."
+                                )
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
