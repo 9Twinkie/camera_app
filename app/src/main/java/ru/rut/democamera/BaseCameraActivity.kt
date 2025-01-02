@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.DialogUtil
@@ -58,15 +59,18 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         }
     }
 
-    protected fun attemptActionOrRequestPermissions(action: () -> Unit) {
-        if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
-            action()
-        } else {
-            DialogUtil.showRationaleDialog(this, rationaleMessage()) {
-                permissionsLauncher.launch(requiredPermissions())
+
+        protected fun attemptActionOrRequestPermissions(action: () -> Unit) {
+            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+                action()
+            } else {
+                DialogUtil.showRationaleDialog(this, rationaleMessage()) {
+                    permissionsLauncher.launch(requiredPermissions())
+                }
             }
         }
-    }
+
+
 
     protected fun setupNavBar(defaultButtonId: Int) {
         supportFragmentManager.beginTransaction()
@@ -75,12 +79,9 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     }
 
     protected fun toggleFlash(flashButton: View) {
-        val flashOnIcon = R.drawable.ic_flash_state_on
-        val flashOffIcon = R.drawable.ic_flash_state_off
-
         isFlashEnabled = !isFlashEnabled
         (flashButton as? ImageButton)?.setImageResource(
-            if (isFlashEnabled) flashOnIcon else flashOffIcon
+            if (isFlashEnabled) R.drawable.ic_flash_state_on else R.drawable.ic_flash_state_off
         )
     }
 
@@ -99,21 +100,39 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         return true
     }
 
-    override fun onGallerySelected() {
-        startActivity(Intent(this, GalleryActivity::class.java))
-        finish()
-    }
+    protected fun setupCamera(
+        previewSurfaceProvider: Preview.SurfaceProvider,
+        additionalUseCases: (ProcessCameraProvider) -> Unit
+    ) {
+        val preview = Preview.Builder().build().also {
+            it.surfaceProvider = previewSurfaceProvider
+        }
 
-    override fun onPhotoModeSelected() {
-        if (this !is MainActivity) {
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+        try {
+            cameraProvider.unbindAll()
+            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+            CameraUtil.initPinchToZoom(this, camera!!)
+            additionalUseCases(cameraProvider)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
+    override fun onGallerySelected() {
+        navigateToActivity(GalleryActivity::class.java)
+    }
+
+    override fun onPhotoModeSelected() {
+        navigateToActivity(MainActivity::class.java)
+    }
+
     override fun onVideoModeSelected() {
-        if (this !is VideoActivity) {
-            startActivity(Intent(this, VideoActivity::class.java))
+        navigateToActivity(VideoActivity::class.java)
+    }
+
+    private fun navigateToActivity(activityClass: Class<*>) {
+        if (this::class.java != activityClass) {
+            startActivity(Intent(this, activityClass))
             finish()
         }
     }

@@ -10,6 +10,7 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import java.io.File
 
 object CameraUtil {
 
@@ -23,35 +24,22 @@ object CameraUtil {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    fun enableTorchOnRecording(camera: Camera?, isRecording: Boolean, flashEnabled: Boolean) {
-        if (flashEnabled && isRecording) {
-            camera?.cameraControl?.enableTorch(true)
-        } else if (flashEnabled) {
-            camera?.cameraControl?.enableTorch(false)
-        }
+    fun controlFlashDuringAction(camera: Camera?, flashEnabled: Boolean, action: () -> Unit) {
+        if (flashEnabled) camera?.cameraControl?.enableTorch(true)
+        action()
+        if (flashEnabled) camera?.cameraControl?.enableTorch(false)
     }
 
-    fun controlFlashDuringAction(
-        camera: Camera?,
-        flashEnabled: Boolean,
-        onActionCompleted: () -> Unit
-    ) {
-        if (flashEnabled) {
-            camera?.cameraControl?.enableTorch(true)
-        }
-        onActionCompleted()
-        if (flashEnabled) {
-            camera?.cameraControl?.enableTorch(false)
-        }
+    fun generateOutputFile(context: Context, prefix: String, extension: String = "jpg"): File {
+        val directory = context.getExternalFilesDir(null) ?: context.filesDir
+        return File(directory, "${prefix}_${System.currentTimeMillis()}.$extension")
     }
 
-    fun showToast(context: Context, message: String) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    fun enableTorchOnRecording(camera: Camera?, enable: Boolean, flashEnabled: Boolean) {
+        if (flashEnabled && enable) {
+            camera?.cameraControl?.enableTorch(true)
         } else {
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            }
+            camera?.cameraControl?.enableTorch(false)
         }
     }
 
@@ -92,5 +80,15 @@ object CameraUtil {
     fun handleTouchEvent(event: MotionEvent): Boolean {
         scaleGestureDetector?.onTouchEvent(event)
         return true
+    }
+
+    fun showToast(context: Context, message: String) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        } else {
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

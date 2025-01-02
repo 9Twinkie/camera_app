@@ -1,7 +1,6 @@
 package ru.rut.democamera
 
 import android.os.Bundle
-import androidx.camera.core.Preview
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
@@ -40,28 +39,11 @@ class VideoActivity : BaseCameraActivity() {
     override fun onPermissionsGranted() {
         CameraUtil.getCameraProvider(this) { provider ->
             cameraProvider = provider
-            bindCameraUseCases()
-        }
-    }
-
-    private fun bindCameraUseCases() {
-        val preview = Preview.Builder().build().also {
-            it.surfaceProvider = binding.preview.surfaceProvider
-        }
-
-        val recorder = Recorder.Builder()
-            .setQualitySelector(
-                androidx.camera.video.QualitySelector.from(androidx.camera.video.Quality.HD)
-            )
-            .build()
-        videoCapture = VideoCapture.withOutput(recorder)
-
-        try {
-            cameraProvider.unbindAll()
-            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, videoCapture)
-            CameraUtil.initPinchToZoom(this, camera!!)
-        } catch (e: Exception) {
-            e.printStackTrace()
+            setupCamera(binding.preview.surfaceProvider) {
+                val recorder = Recorder.Builder().build()
+                videoCapture = VideoCapture.withOutput(recorder)
+                cameraProvider.bindToLifecycle(this, cameraSelector, videoCapture)
+            }
         }
     }
 
@@ -85,7 +67,6 @@ class VideoActivity : BaseCameraActivity() {
 
         try {
             binding.flashBtn.isEnabled = false
-
             recording = videoCapture.output
                 .prepareRecording(this, outputOptions)
                 .withAudioEnabled()
