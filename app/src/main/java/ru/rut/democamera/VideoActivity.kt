@@ -88,6 +88,7 @@ class VideoActivity : BaseCameraActivity() {
     private fun stopRecording() {
         recording?.stop()
         recording = null
+        camera?.cameraControl?.enableTorch(false)
     }
 
     private fun handleRecordingFinalized(event: VideoRecordEvent.Finalize, file: File) {
