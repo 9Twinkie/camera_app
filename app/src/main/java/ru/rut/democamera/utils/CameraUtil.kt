@@ -35,14 +35,6 @@ object CameraUtil {
         return File(directory, "${prefix}_${System.currentTimeMillis()}.$extension")
     }
 
-    fun enableTorchOnRecording(camera: Camera?, enable: Boolean, flashEnabled: Boolean) {
-        if (flashEnabled && enable) {
-            camera?.cameraControl?.enableTorch(true)
-        } else {
-            camera?.cameraControl?.enableTorch(false)
-        }
-    }
-
     fun toggleCameraSelector(
         currentSelector: CameraSelector,
         onCameraChanged: (Boolean) -> Unit

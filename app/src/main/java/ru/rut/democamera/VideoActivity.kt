@@ -18,23 +18,26 @@ class VideoActivity : BaseCameraActivity() {
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var recording: Recording? = null
 
+    override val requiredPermissions = PermissionsUtil.VIDEO_PERMISSIONS
+    override val rationaleMessage = "Camera and audio access are required to record videos."
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityVideoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        checkAndRequestPermissions()
+        checkAndRequestPermissions { onPermissionsGranted() }
         setupNavBar(R.id.videoBtn)
 
+        setupListeners()
+    }
+
+    private fun setupListeners() {
         binding.preview.setOnTouchListener { view, event -> handleTouchEvent(view, event) }
         binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
         binding.captureButton.setOnClickListener { toggleRecording() }
         binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
     }
-
-    override fun requiredPermissions() = PermissionsUtil.VIDEO_PERMISSIONS
-
-    override fun rationaleMessage() = "Camera and audio access are required to record videos."
 
     override fun onPermissionsGranted() {
         CameraUtil.getCameraProvider(this) { provider ->
@@ -48,36 +51,34 @@ class VideoActivity : BaseCameraActivity() {
     }
 
     private fun toggleRecording() {
-        attemptActionOrRequestPermissions {
-            if (recording == null) {
-                startRecording()
-                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
-                CameraUtil.enableTorchOnRecording(camera, true, isFlashEnabled)
-            } else {
-                stopRecording()
-                binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
-                CameraUtil.enableTorchOnRecording(camera, false, isFlashEnabled)
-            }
+        if (recording == null) {
+            startRecording()
+            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_square)
+            binding.flashBtn.isEnabled = false
+            binding.switchBtn.isEnabled = false
+        } else {
+            stopRecording()
+            binding.captureButton.icon = ContextCompat.getDrawable(this, R.drawable.ic_circle)
+            binding.flashBtn.isEnabled = true
+            binding.switchBtn.isEnabled = true
         }
     }
 
     private fun startRecording() {
+        if (!PermissionsUtil.arePermissionsGranted(this, requiredPermissions)) {
+            CameraUtil.showToast(this, "Permissions are missing.")
+            return
+        }
+
         val file = File(externalMediaDirs.first(), "VID_${System.currentTimeMillis()}.mp4")
         val outputOptions = FileOutputOptions.Builder(file).build()
 
         try {
-            binding.flashBtn.isEnabled = false
-            recording = videoCapture.output
-                .prepareRecording(this, outputOptions)
+            camera?.cameraControl?.enableTorch(isFlashEnabled)
+            recording = videoCapture.output.prepareRecording(this, outputOptions)
                 .withAudioEnabled()
                 .start(ContextCompat.getMainExecutor(this)) { event ->
-                    when (event) {
-                        is VideoRecordEvent.Start -> {
-                            CameraUtil.showToast(this, "Recording started.")
-                            binding.switchBtn.isEnabled = false
-                        }
-                        is VideoRecordEvent.Finalize -> handleRecordingFinalized(event, file)
-                    }
+                    if (event is VideoRecordEvent.Finalize) handleRecordingFinalized(event, file)
                 }
         } catch (e: SecurityException) {
             CameraUtil.showToast(this, "Permissions are missing.")
@@ -87,14 +88,9 @@ class VideoActivity : BaseCameraActivity() {
     private fun stopRecording() {
         recording?.stop()
         recording = null
-        binding.flashBtn.isEnabled = true
     }
 
     private fun handleRecordingFinalized(event: VideoRecordEvent.Finalize, file: File) {
-        binding.switchBtn.isEnabled = true
-        recording = null
-        binding.flashBtn.isEnabled = true
-
         if (event.hasError()) {
             CameraUtil.showToast(this, "Error recording video.")
         } else {
@@ -102,3 +98,4 @@ class VideoActivity : BaseCameraActivity() {
         }
     }
 }
+

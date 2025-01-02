@@ -27,9 +27,8 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     protected var camera: Camera? = null
     protected var isFlashEnabled = false
 
-    abstract fun requiredPermissions(): Array<String>
-    abstract fun rationaleMessage(): String
-    abstract fun onPermissionsGranted()
+    abstract val requiredPermissions: Array<String>
+    abstract val rationaleMessage: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +40,7 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         permissionsLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
+            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions)) {
                 onPermissionsGranted()
             } else {
                 DialogUtil.showPermissionDeniedDialog(this, packageName)
@@ -49,28 +48,17 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         }
     }
 
-    protected fun checkAndRequestPermissions() {
-        if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
-            onPermissionsGranted()
+    protected open fun onPermissionsGranted() {}
+
+    protected fun checkAndRequestPermissions(action: () -> Unit) {
+        if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions)) {
+            action()
         } else {
-            DialogUtil.showRationaleDialog(this, rationaleMessage()) {
-                permissionsLauncher.launch(requiredPermissions())
+            DialogUtil.showRationaleDialog(this, rationaleMessage) {
+                permissionsLauncher.launch(requiredPermissions)
             }
         }
     }
-
-
-        protected fun attemptActionOrRequestPermissions(action: () -> Unit) {
-            if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions())) {
-                action()
-            } else {
-                DialogUtil.showRationaleDialog(this, rationaleMessage()) {
-                    permissionsLauncher.launch(requiredPermissions())
-                }
-            }
-        }
-
-
 
     protected fun setupNavBar(defaultButtonId: Int) {
         supportFragmentManager.beginTransaction()

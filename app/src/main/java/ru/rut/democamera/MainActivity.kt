@@ -12,23 +12,26 @@ class MainActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
 
+    override val requiredPermissions = PermissionsUtil.PHOTO_PERMISSIONS
+    override val rationaleMessage = "Camera access is required to take photos."
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        checkAndRequestPermissions()
+        checkAndRequestPermissions { onPermissionsGranted() }
         setupNavBar(R.id.photoBtn)
 
+        setupListeners()
+    }
+
+    private fun setupListeners() {
         binding.preview.setOnTouchListener { view, event -> handleTouchEvent(view, event) }
         binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
         binding.captureButton.setOnClickListener { capturePhoto() }
         binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
     }
-
-    override fun requiredPermissions() = PermissionsUtil.PHOTO_PERMISSIONS
-
-    override fun rationaleMessage() = "Camera access is required to take photos."
 
     override fun onPermissionsGranted() {
         CameraUtil.getCameraProvider(this) { provider ->
