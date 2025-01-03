@@ -12,7 +12,6 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
 
     private lateinit var binding: ActivityGalleryBinding
     private lateinit var mediaFiles: List<File>
-    private lateinit var mediaAdapter: MediaGridAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,20 +25,20 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun setupMediaFiles() {
-        val directory = File(externalMediaDirs.firstOrNull()?.absolutePath.orEmpty())
-        mediaFiles = directory.listFiles()
+        val directory = externalMediaDirs.firstOrNull()
+        mediaFiles = directory?.listFiles()
             ?.sortedByDescending { it.lastModified() }
             ?.toList()
             ?: emptyList()
     }
 
     private fun setupRecyclerView() {
-        binding.recyclerView.layoutManager = GridLayoutManager(this,3)
-        binding.recyclerView.addItemDecoration(GridSpacingItemDecoration(3,16))
-        mediaAdapter = MediaGridAdapter(mediaFiles, this)
-        binding.recyclerView.adapter = mediaAdapter
+        binding.recyclerView.apply {
+            layoutManager = GridLayoutManager(this@GalleryActivity, 3)
+            addItemDecoration(GridSpacingItemDecoration(3, 16))
+            adapter = MediaGridAdapter(mediaFiles, this@GalleryActivity)
+        }
     }
-
 
     private fun setupNavBar() {
         supportFragmentManager.beginTransaction()
@@ -48,19 +47,16 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun displayItemCount() {
-        val count = mediaAdapter.itemCount
-        binding.fileCountText.text = if (count > 0) {
-            "$count files"
-        } else {
-            "No files yet"
+        binding.fileCountText.text = when (val count = mediaFiles.size) {
+            0 -> "No files yet"
+            else -> "$count files"
         }
     }
 
     override fun onItemClick(position: Int) {
-        Intent(this, FullScreenActivity::class.java).apply {
+        startActivity(Intent(this, FullScreenActivity::class.java).apply {
             putExtra("current_index", position)
-            startActivity(this)
-        }
+        })
     }
 
     override fun onGallerySelected() {
@@ -75,8 +71,6 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun navigateTo(activityClass: Class<*>) {
-        Intent(this, activityClass).apply {
-            startActivity(this)
-        }
+        startActivity(Intent(this, activityClass))
     }
 }
