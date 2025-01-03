@@ -31,7 +31,7 @@ object CameraUtil {
         if (flashEnabled) camera?.cameraControl?.enableTorch(false)
     }
 
-    fun generateOutputFile(prefix: String, extension: String = "jpg"): File {
+    fun generateOutputFile(prefix: String, extension: String): File {
         val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera app")
         if (!directory.exists()) {
             directory.mkdirs()

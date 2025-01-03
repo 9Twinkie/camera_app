@@ -73,7 +73,6 @@ class VideoActivity : BaseCameraActivity() {
             CameraUtil.showToast(this, "Permissions are missing.")
             return
         }
-
         val file = CameraUtil.generateOutputFile( "VIDEO", "mp4")
         val outputOptions = FileOutputOptions.Builder(file).build()
 

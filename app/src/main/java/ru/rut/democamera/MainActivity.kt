@@ -51,7 +51,7 @@ class MainActivity : BaseCameraActivity() {
 
     private fun capturePhoto() {
         checkAndRequestPermissions {
-            val file = CameraUtil.generateOutputFile("PHOTO", "JPEG")
+            val file = CameraUtil.generateOutputFile("PHOTO", "jpg")
             animateFlashEffect()
             CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
                 imageCapture?.takePicture(
