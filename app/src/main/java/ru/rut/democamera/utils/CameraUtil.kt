@@ -1,6 +1,7 @@
 package ru.rut.democamera.utils
 
 import android.content.Context
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -30,10 +31,15 @@ object CameraUtil {
         if (flashEnabled) camera?.cameraControl?.enableTorch(false)
     }
 
-    fun generateOutputFile(context: Context, prefix: String, extension: String = "jpg"): File {
-        val directory = context.getExternalFilesDir(null) ?: context.filesDir
-        return File(directory, "${prefix}_${System.currentTimeMillis()}.$extension")
+    fun generateOutputFile(prefix: String, extension: String = "jpg"): File {
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera app")
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val file = File(directory, "${prefix}_${System.currentTimeMillis()}.$extension")
+        return file
     }
+
 
     fun toggleCameraSelector(
         currentSelector: CameraSelector,

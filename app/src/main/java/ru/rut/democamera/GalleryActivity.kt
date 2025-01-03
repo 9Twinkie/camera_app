@@ -2,16 +2,19 @@ package ru.rut.democamera
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import ru.rut.democamera.databinding.ActivityGalleryBinding
 import ru.rut.democamera.utils.GridSpacingItemDecoration
 import java.io.File
+import java.util.Locale
 
 class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListener, NavBarFragment.NavBarListener {
 
     private lateinit var binding: ActivityGalleryBinding
     private lateinit var mediaFiles: List<File>
+    private lateinit var mediaAdapter: MediaGridAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,20 +28,22 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun setupMediaFiles() {
-        val directory = externalMediaDirs.firstOrNull()
-        mediaFiles = directory?.listFiles()
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera app")
+        mediaFiles = directory.listFiles()
+            ?.filter { it.extension.lowercase(Locale.getDefault()) in listOf("jpg", "jpeg", "png", "mp4", "mov") }
             ?.sortedByDescending { it.lastModified() }
             ?.toList()
             ?: emptyList()
     }
 
+
     private fun setupRecyclerView() {
-        binding.recyclerView.apply {
-            layoutManager = GridLayoutManager(this@GalleryActivity, 3)
-            addItemDecoration(GridSpacingItemDecoration(3, 16))
-            adapter = MediaGridAdapter(mediaFiles, this@GalleryActivity)
-        }
+        binding.recyclerView.layoutManager = GridLayoutManager(this,3)
+        binding.recyclerView.addItemDecoration(GridSpacingItemDecoration(3,16))
+        mediaAdapter = MediaGridAdapter(mediaFiles, this)
+        binding.recyclerView.adapter = mediaAdapter
     }
+
 
     private fun setupNavBar() {
         supportFragmentManager.beginTransaction()
@@ -47,16 +52,19 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun displayItemCount() {
-        binding.fileCountText.text = when (val count = mediaFiles.size) {
-            0 -> "No files yet"
-            else -> "$count files"
+        val count = mediaAdapter.itemCount
+        binding.fileCountText.text = if (count > 0) {
+            "$count files"
+        } else {
+            "No files yet"
         }
     }
 
     override fun onItemClick(position: Int) {
-        startActivity(Intent(this, FullScreenActivity::class.java).apply {
+        Intent(this, FullScreenActivity::class.java).apply {
             putExtra("current_index", position)
-        })
+            startActivity(this)
+        }
     }
 
     override fun onGallerySelected() {
@@ -71,6 +79,8 @@ class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListene
     }
 
     private fun navigateTo(activityClass: Class<*>) {
-        startActivity(Intent(this, activityClass))
+        Intent(this, activityClass).apply {
+            startActivity(this)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package ru.rut.democamera
 
+import android.media.MediaScannerConnection
 import android.os.Bundle
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -50,7 +51,7 @@ class MainActivity : BaseCameraActivity() {
 
     private fun capturePhoto() {
         checkAndRequestPermissions {
-            val file = CameraUtil.generateOutputFile(this, "JPEG")
+            val file = CameraUtil.generateOutputFile("PHOTO", "JPEG")
             animateFlashEffect()
             CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
                 imageCapture?.takePicture(
@@ -64,6 +65,12 @@ class MainActivity : BaseCameraActivity() {
                                 CameraUtil.showToast(
                                     this@MainActivity,
                                     "Photo saved: ${file.absolutePath}"
+                                )
+                                MediaScannerConnection.scanFile(
+                                    this@MainActivity,
+                                    arrayOf(file.absolutePath),
+                                    null,
+                                    null
                                 )
                             }
                         }

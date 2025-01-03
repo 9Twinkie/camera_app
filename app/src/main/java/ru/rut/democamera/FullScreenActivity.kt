@@ -2,6 +2,7 @@ package ru.rut.democamera
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import ru.rut.democamera.databinding.ActivityFullscreenGalleryBinding
@@ -18,9 +19,9 @@ class FullScreenActivity : AppCompatActivity() {
         binding = ActivityFullscreenGalleryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val directory = File(externalMediaDirs[0].absolutePath)
-        files = (directory.listFiles()?.toList()?.sortedByDescending { it.lastModified() }
-            ?: emptyList()).toMutableList()
+        val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera app")
+        files = (directory.listFiles()?.toList()?.sortedByDescending { it.lastModified() } ?: emptyList()).toMutableList()
+
 
         currentIndex = intent.getIntExtra("current_index", 0)
 

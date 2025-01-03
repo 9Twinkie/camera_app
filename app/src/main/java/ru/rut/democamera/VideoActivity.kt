@@ -1,5 +1,6 @@
 package ru.rut.democamera
 
+import android.media.MediaScannerConnection
 import android.os.Bundle
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Recorder
@@ -73,7 +74,7 @@ class VideoActivity : BaseCameraActivity() {
             return
         }
 
-        val file = File(externalMediaDirs.first(), "VID_${System.currentTimeMillis()}.mp4")
+        val file = CameraUtil.generateOutputFile( "VIDEO", "mp4")
         val outputOptions = FileOutputOptions.Builder(file).build()
 
         try {
@@ -87,12 +88,12 @@ class VideoActivity : BaseCameraActivity() {
                         handleRecordingFinalized(event, file)
                     }
                 }
-
         } catch (se: SecurityException) {
             CameraUtil.showToast(this, "SecurityException: Missing required permissions.")
             DialogUtil.showPermissionDeniedDialog(this, packageName)
         }
     }
+
 
     private fun stopRecording() {
         recording?.stop()
@@ -105,6 +106,8 @@ class VideoActivity : BaseCameraActivity() {
             CameraUtil.showToast(this, "Error recording video.")
         } else {
             CameraUtil.showToast(this, "Video saved: ${file.absolutePath}")
+            MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), null, null)
         }
     }
+
 }
