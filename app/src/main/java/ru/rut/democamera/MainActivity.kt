@@ -41,9 +41,17 @@ class MainActivity : BaseCameraActivity() {
         }
     }
 
+    private fun animateFlashEffect() {
+        binding.root.apply {
+            foreground = android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
+            postDelayed({ foreground = null }, 100)
+        }
+    }
+
     private fun capturePhoto() {
         checkAndRequestPermissions {
             val file = CameraUtil.generateOutputFile(this, "JPEG")
+            animateFlashEffect()
             CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
                 imageCapture?.takePicture(
                     ImageCapture.OutputFileOptions.Builder(file).build(),
