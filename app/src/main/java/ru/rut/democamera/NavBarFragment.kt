@@ -33,30 +33,20 @@ class NavBarFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.galleryBtn.visibility = View.VISIBLE
-        binding.photoBtn.visibility = View.VISIBLE
-        binding.videoBtn.visibility = View.VISIBLE
-
         highlightSelectedButton()
 
-        binding.galleryBtn.setOnClickListener {
-            listener.onGallerySelected()
-        }
-        binding.photoBtn.setOnClickListener {
-            listener.onPhotoModeSelected()
-        }
-        binding.videoBtn.setOnClickListener {
-            listener.onVideoModeSelected()
-        }
+        binding.galleryBtn.setOnClickListener { listener.onGallerySelected() }
+        binding.photoBtn.setOnClickListener { listener.onPhotoModeSelected() }
+        binding.videoBtn.setOnClickListener { listener.onVideoModeSelected() }
     }
 
     private fun highlightSelectedButton() {
         val defaultColor = ContextCompat.getColor(requireContext(), R.color.purple_500)
         val selectedColor = ContextCompat.getColor(requireContext(), R.color.purple_200)
 
-        binding.galleryBtn.setBackgroundColor(defaultColor)
-        binding.photoBtn.setBackgroundColor(defaultColor)
-        binding.videoBtn.setBackgroundColor(defaultColor)
+        listOf(binding.galleryBtn, binding.photoBtn, binding.videoBtn).forEach { button ->
+            button.setBackgroundColor(defaultColor)
+        }
 
         when (selectedButtonId) {
             R.id.galleryBtn -> binding.galleryBtn.setBackgroundColor(selectedColor)
