@@ -36,7 +36,9 @@ class MainActivity : BaseCameraActivity() {
         CameraUtil.getCameraProvider(this) { provider ->
             cameraProvider = provider
             setupCamera(binding.preview.surfaceProvider) {
-                imageCapture = ImageCapture.Builder().build()
+                imageCapture = ImageCapture.Builder()
+                    .setFlashMode(ImageCapture.FLASH_MODE_OFF)
+                    .build()
                 cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture)
             }
         }
@@ -53,40 +55,44 @@ class MainActivity : BaseCameraActivity() {
         checkAndRequestPermissions {
             val file = CameraUtil.generateOutputFile("PHOTO", "jpg")
             animateFlashEffect()
-            CameraUtil.controlFlashDuringAction(camera, isFlashEnabled) {
-                imageCapture?.takePicture(
-                    ImageCapture.OutputFileOptions.Builder(file).build(),
-                    cameraExecutor,
-                    object : ImageCapture.OnImageSavedCallback {
-                        override fun onImageSaved(
-                            outputFileResults: ImageCapture.OutputFileResults
-                        ) {
-                            runOnUiThread {
-                                CameraUtil.showToast(
-                                    this@MainActivity,
-                                    "Photo saved: ${file.absolutePath}"
-                                )
-                                MediaScannerConnection.scanFile(
-                                    this@MainActivity,
-                                    arrayOf(file.absolutePath),
-                                    null,
-                                    null
-                                )
-                            }
-                        }
 
-                        override fun onError(exception: ImageCaptureException) {
-                            runOnUiThread {
-                                CameraUtil.showToast(
-                                    this@MainActivity,
-                                    "Failed to capture photo."
-                                )
-                            }
+            imageCapture?.flashMode = if (isFlashEnabled) {
+                ImageCapture.FLASH_MODE_ON
+            } else {
+                ImageCapture.FLASH_MODE_OFF
+            }
+
+            imageCapture?.takePicture(
+                ImageCapture.OutputFileOptions.Builder(file).build(),
+                cameraExecutor,
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                        runOnUiThread {
+                            CameraUtil.showToast(
+                                this@MainActivity,
+                                "Photo saved: ${file.absolutePath}"
+                            )
+                            MediaScannerConnection.scanFile(
+                                this@MainActivity,
+                                arrayOf(file.absolutePath),
+                                null,
+                                null
+                            )
                         }
                     }
-                )
-            }
+
+                    override fun onError(exception: ImageCaptureException) {
+                        runOnUiThread {
+                            CameraUtil.showToast(
+                                this@MainActivity,
+                                "Failed to capture photo."
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
+
 }
 
