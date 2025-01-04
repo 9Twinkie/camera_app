@@ -25,11 +25,6 @@ object CameraUtil {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    fun controlFlashDuringAction(camera: Camera?, flashEnabled: Boolean, action: () -> Unit) {
-        if (flashEnabled) camera?.cameraControl?.enableTorch(true)
-        action()
-        if (flashEnabled) camera?.cameraControl?.enableTorch(false)
-    }
 
     fun generateOutputFile(prefix: String, extension: String): File {
         val directory = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera app")
