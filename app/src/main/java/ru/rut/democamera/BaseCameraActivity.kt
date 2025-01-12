@@ -23,9 +23,11 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
     protected lateinit var cameraProvider: ProcessCameraProvider
     protected lateinit var cameraExecutor: ExecutorService
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
+
     protected var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     protected var camera: Camera? = null
     protected var isFlashEnabled = false
+
     abstract val requiredPermissions: Array<String>
     abstract val rationaleMessage: String
 
@@ -47,8 +49,7 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         }
     }
 
-    protected open fun onPermissionsGranted() {
-    }
+    protected open fun onPermissionsGranted() {}
 
     protected fun checkAndRequestPermissions(action: () -> Unit) {
         if (PermissionsUtil.arePermissionsGranted(this, requiredPermissions)) {
@@ -95,12 +96,12 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
         val preview = Preview.Builder().build().also {
             it.surfaceProvider = previewSurfaceProvider
         }
-
         try {
             cameraProvider.unbindAll()
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-            CameraUtil.initPinchToZoom(this, camera!!)
+            camera?.let { CameraUtil.initPinchToZoom(this, it) }
             additionalUseCases(cameraProvider)
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -123,5 +124,10 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
             startActivity(Intent(this, activityClass))
             finish()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
 }
