@@ -26,7 +26,7 @@ class FullScreenAdapter(private var files: List<File>) :
         val file = files[position]
         val extension = file.extension.lowercase(Locale.getDefault())
 
-        if (extension in listOf("mp4", "mov")) {
+        if (extension in listOf("mp4")) {
             holder.binding.imageView.visibility = android.view.View.GONE
             holder.binding.videoView.visibility = android.view.View.VISIBLE
             holder.binding.videoView.setVideoURI(Uri.fromFile(file))
