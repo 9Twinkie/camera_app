@@ -23,10 +23,7 @@ class MediaGridAdapter(
                 .load(file)
                 .centerCrop()
                 .into(binding.mediaThumbnail)
-
-
             binding.videoIcon.visibility = if (file.extension == "mp4") View.VISIBLE else View.GONE
-
             binding.root.setOnClickListener { listener.onItemClick(adapterPosition) }
         }
     }
@@ -37,7 +34,6 @@ class MediaGridAdapter(
     }
 
     override fun getItemCount() = files.size
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(files[position], listener)
     }
