@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.appcompat.app.AlertDialog
 
 object DialogUtil {
-
     fun showRationaleDialog(context: Context, message: String, onGrant: () -> Unit) {
         AlertDialog.Builder(context)
             .setTitle("Permissions Required")

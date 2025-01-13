@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 
 object PermissionsUtil {
-
     val PHOTO_PERMISSIONS = arrayOf(
         Manifest.permission.CAMERA
     )
@@ -20,5 +19,4 @@ object PermissionsUtil {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
     }
-
 }

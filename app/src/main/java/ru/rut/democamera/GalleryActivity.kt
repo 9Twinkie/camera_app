@@ -11,7 +11,6 @@ import java.io.File
 
 class GalleryActivity : AppCompatActivity(), MediaGridAdapter.OnItemClickListener,
     NavBarFragment.NavBarListener {
-
     private lateinit var binding: ActivityGalleryBinding
     private lateinit var mediaFiles: List<File>
 

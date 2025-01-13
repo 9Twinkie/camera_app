@@ -15,7 +15,6 @@ import ru.rut.democamera.utils.PermissionsUtil
 import java.io.File
 
 class VideoActivity : BaseCameraActivity() {
-
     private lateinit var binding: ActivityVideoBinding
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var recording: Recording? = null
@@ -93,7 +92,6 @@ class VideoActivity : BaseCameraActivity() {
         }
     }
 
-
     private fun stopRecording() {
         recording?.stop()
         recording = null
@@ -108,5 +106,4 @@ class VideoActivity : BaseCameraActivity() {
             MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), null, null)
         }
     }
-
 }

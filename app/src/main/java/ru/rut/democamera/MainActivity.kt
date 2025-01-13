@@ -9,7 +9,6 @@ import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.PermissionsUtil
 
 class MainActivity : BaseCameraActivity() {
-
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null
     override val requiredPermissions = PermissionsUtil.PHOTO_PERMISSIONS
@@ -93,6 +92,5 @@ class MainActivity : BaseCameraActivity() {
             )
         }
     }
-
 }
 

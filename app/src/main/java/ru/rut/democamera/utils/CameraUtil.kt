@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import java.io.File
 
 object CameraUtil {
-
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var currentZoomRatio: Float = 1.0f
 

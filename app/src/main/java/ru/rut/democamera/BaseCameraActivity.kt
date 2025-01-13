@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
-
     protected lateinit var cameraProvider: ProcessCameraProvider
     protected lateinit var cameraExecutor: ExecutorService
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
@@ -101,7 +100,6 @@ abstract class BaseCameraActivity : AppCompatActivity(), NavBarFragment.NavBarLi
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
             camera?.let { CameraUtil.initPinchToZoom(this, it) }
             additionalUseCases(cameraProvider)
-
         } catch (e: Exception) {
             e.printStackTrace()
         }
