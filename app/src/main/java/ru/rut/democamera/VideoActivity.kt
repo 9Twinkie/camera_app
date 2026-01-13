@@ -54,9 +54,14 @@ class VideoActivity : BaseCameraActivity() {
     }
 
     private fun setupListeners() {
-        binding.preview.setOnTouchListener { view, event ->
-            handleTouchEvent(view, event)
+        binding.preview.setOnTouchListener { _, event ->
+            handleTouchEvent(
+                binding.preview,
+                binding.focusView,
+                event
+            )
         }
+
         binding.flashBtn.setOnClickListener {
             toggleFlash(binding.flashBtn)
         }

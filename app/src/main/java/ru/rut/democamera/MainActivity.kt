@@ -24,7 +24,14 @@ class MainActivity : BaseCameraActivity() {
     }
 
     private fun setupListeners() {
-        binding.preview.setOnTouchListener { view, event -> handleTouchEvent(view, event) }
+        binding.preview.setOnTouchListener { _, event ->
+            handleTouchEvent(
+                binding.preview,
+                binding.focusView,
+                event
+            )
+        }
+
         binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
         binding.captureButton.setOnClickListener { capturePhoto() }
         binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
