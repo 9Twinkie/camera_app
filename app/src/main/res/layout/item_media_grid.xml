@@ -9,22 +9,44 @@
         android:id="@+id/media_thumbnail"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:contentDescription="@string/image"
         android:scaleType="centerCrop"
+        android:contentDescription="@string/image"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Затемнение под текст -->
+    <View
+        android:id="@+id/dateBackground"
+        android:layout_width="0dp"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_date_overlay"
+        app:layout_constraintBottom_toBottomOf="@id/media_thumbnail"
+        app:layout_constraintStart_toStartOf="@id/media_thumbnail"
+        app:layout_constraintEnd_toEndOf="@id/media_thumbnail"/>
+
+    <TextView
+        android:id="@+id/dateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        app:layout_constraintBottom_toBottomOf="@id/media_thumbnail"
+        app:layout_constraintStart_toStartOf="@id/media_thumbnail"/>
 
     <ImageView
         android:id="@+id/video_icon"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_margin="5dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="6dp"
         android:contentDescription="@string/video"
         android:src="@drawable/ic_triangle"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/media_thumbnail"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

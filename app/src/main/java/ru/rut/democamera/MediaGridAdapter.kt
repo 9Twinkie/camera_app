@@ -7,6 +7,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import ru.rut.democamera.databinding.ItemMediaGridBinding
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 
 class MediaGridAdapter(
     private val files: List<File>,
@@ -19,12 +23,23 @@ class MediaGridAdapter(
 
     class ViewHolder(private val binding: ItemMediaGridBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(file: File, listener: OnItemClickListener) {
+
             Glide.with(binding.root)
                 .load(file)
                 .centerCrop()
                 .into(binding.mediaThumbnail)
-            binding.videoIcon.visibility = if (file.extension == "mp4") View.VISIBLE else View.GONE
-            binding.root.setOnClickListener { listener.onItemClick(adapterPosition) }
+
+            binding.videoIcon.visibility =
+                if (file.extension.lowercase() == "mp4") View.VISIBLE else View.GONE
+
+            val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+            val formattedDate = dateFormat.format(Date(file.lastModified()))
+
+            binding.dateText.text = formattedDate
+
+            binding.root.setOnClickListener {
+                listener.onItemClick(adapterPosition)
+            }
         }
     }
 
