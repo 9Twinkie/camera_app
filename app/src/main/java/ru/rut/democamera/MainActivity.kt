@@ -8,6 +8,7 @@ import ru.rut.democamera.databinding.ActivityMainBinding
 import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.PermissionsUtil
 
+
 class MainActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityMainBinding
     private var imageCapture: ImageCapture? = null

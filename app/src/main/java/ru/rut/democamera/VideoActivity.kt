@@ -4,6 +4,7 @@ import android.media.MediaScannerConnection
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
@@ -22,6 +23,8 @@ class VideoActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityVideoBinding
     private lateinit var videoCapture: VideoCapture<Recorder>
     private var recording: Recording? = null
+    private var pendingStartRecording = false
+
 
     override val requiredPermissions = PermissionsUtil.VIDEO_PERMISSIONS
     override val rationaleMessage =
@@ -50,26 +53,24 @@ class VideoActivity : BaseCameraActivity() {
         setupListeners()
 
         binding.recordTimer.text = "00:00"
-        binding.recordTimer.visibility = android.view.View.GONE
+        binding.recordTimer.visibility = View.GONE
     }
 
     private fun setupListeners() {
         binding.preview.setOnTouchListener { _, event ->
-            handleTouchEvent(
-                binding.preview,
-                binding.focusView,
-                event
-            )
+            handleTouchEvent(binding.preview, binding.focusView, event)
         }
 
         binding.flashBtn.setOnClickListener {
             toggleFlash(binding.flashBtn)
         }
+
         binding.captureButton.setOnClickListener {
             toggleRecording()
         }
+
         binding.switchBtn.setOnClickListener {
-            switchCamera(binding.flashBtn)
+            switchCameraDuringRecording()
         }
     }
 
@@ -80,14 +81,23 @@ class VideoActivity : BaseCameraActivity() {
             setupCamera(binding.preview.surfaceProvider) {
                 val recorder = Recorder.Builder().build()
                 videoCapture = VideoCapture.withOutput(recorder)
-                cameraProvider.bindToLifecycle(
-                    this,
-                    cameraSelector,
-                    videoCapture
-                )
+                camera = cameraProvider.bindToLifecycle(this, cameraSelector, videoCapture)
+
+                camera?.cameraInfo?.cameraState?.observe(this) { state ->
+                    if (
+                        state.type == androidx.camera.core.CameraState.Type.OPEN &&
+                        pendingStartRecording
+                    ) {
+                        pendingStartRecording = false
+                        startRecording()
+                    }
+                }
+
             }
         }
     }
+
+    /* ================== ЗАПИСЬ ================== */
 
     private fun toggleRecording() {
         checkAndRequestPermissions {
@@ -95,14 +105,10 @@ class VideoActivity : BaseCameraActivity() {
                 startRecording()
                 binding.captureButton.icon =
                     ContextCompat.getDrawable(this, R.drawable.ic_square)
-                binding.flashBtn.isEnabled = false
-                binding.switchBtn.isEnabled = false
             } else {
                 stopRecording()
                 binding.captureButton.icon =
                     ContextCompat.getDrawable(this, R.drawable.ic_circle)
-                binding.flashBtn.isEnabled = true
-                binding.switchBtn.isEnabled = true
             }
         }
     }
@@ -122,25 +128,20 @@ class VideoActivity : BaseCameraActivity() {
             recording = videoCapture.output
                 .prepareRecording(this, outputOptions)
                 .withAudioEnabled()
-                .start(
-                    ContextCompat.getMainExecutor(this)
-                ) { event ->
+                .start(ContextCompat.getMainExecutor(this)) { event ->
                     if (event is VideoRecordEvent.Finalize) {
                         handleRecordingFinalized(event, file)
                     }
                 }
 
-            /* ---- запуск таймера ---- */
-            secondsElapsed = 0
-            binding.recordTimer.text = "00:00"
-            binding.recordTimer.visibility = android.view.View.VISIBLE
+            if (secondsElapsed == 0) {
+                binding.recordTimer.text = "00:00"
+            }
+            binding.recordTimer.visibility = View.VISIBLE
             timerHandler.post(timerRunnable)
 
         } catch (se: SecurityException) {
-            CameraUtil.showToast(
-                this,
-                "SecurityException: Missing required permissions."
-            )
+            CameraUtil.showToast(this, "Missing permissions.")
             DialogUtil.showPermissionDeniedDialog(this, packageName)
         }
     }
@@ -151,11 +152,31 @@ class VideoActivity : BaseCameraActivity() {
 
         camera?.cameraControl?.enableTorch(false)
 
-        /* ---- остановка таймера ---- */
         timerHandler.removeCallbacks(timerRunnable)
-        binding.recordTimer.visibility = android.view.View.GONE
+        binding.recordTimer.visibility = View.GONE
         secondsElapsed = 0
     }
+
+    /* ================== ПЕРЕКЛЮЧЕНИЕ КАМЕРЫ ================== */
+
+    private fun switchCameraDuringRecording() {
+        val wasRecording = recording != null
+
+        if (wasRecording) {
+            pendingStartRecording = true
+            recording?.stop()
+            recording = null
+        }
+
+        cameraSelector = CameraUtil.toggleCameraSelector(cameraSelector) { isFront ->
+            binding.flashBtn.visibility = if (isFront) View.GONE else View.VISIBLE
+        }
+
+        onPermissionsGranted()
+    }
+
+
+    /* ================== CALLBACK ================== */
 
     private fun handleRecordingFinalized(
         event: VideoRecordEvent.Finalize,
@@ -164,10 +185,7 @@ class VideoActivity : BaseCameraActivity() {
         if (event.hasError()) {
             CameraUtil.showToast(this, "Error recording video.")
         } else {
-            CameraUtil.showToast(
-                this,
-                "Video saved: ${file.absolutePath}"
-            )
+            CameraUtil.showToast(this, "Video saved")
             MediaScannerConnection.scanFile(
                 this,
                 arrayOf(file.absolutePath),
@@ -181,6 +199,8 @@ class VideoActivity : BaseCameraActivity() {
         super.onDestroy()
         timerHandler.removeCallbacks(timerRunnable)
     }
+
+    /* ================== UTILS ================== */
 
     private fun formatTime(seconds: Int): String {
         val minutes = TimeUnit.SECONDS.toMinutes(seconds.toLong())
