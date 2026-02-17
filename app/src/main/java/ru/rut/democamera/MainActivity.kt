@@ -1,104 +1,78 @@
 package ru.rut.democamera
 
-import android.media.MediaScannerConnection
 import android.os.Bundle
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import ru.rut.democamera.databinding.ActivityMainBinding
-import ru.rut.democamera.utils.CameraUtil
 import ru.rut.democamera.utils.PermissionsUtil
 
+class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
 
-class MainActivity : BaseCameraActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var imageCapture: ImageCapture? = null
-    override val requiredPermissions = PermissionsUtil.PHOTO_PERMISSIONS
-    override val rationaleMessage = "Camera access is required to take photos."
+    private var currentFragmentTag: String = TAG_PHOTO
+
+    companion object {
+        const val TAG_PHOTO = "PHOTO"
+        const val TAG_VIDEO = "VIDEO"
+        const val TAG_GALLERY = "GALLERY"
+        const val TAG_FULL_SCREEN = "FULL_SCREEN"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        checkAndRequestPermissions { onPermissionsGranted() }
-        setupNavBar(R.id.photoBtn)
-        setupListeners()
-    }
 
-    private fun setupListeners() {
-        binding.preview.setOnTouchListener { _, event ->
-            handleTouchEvent(
-                binding.preview,
-                binding.focusView,
-                event
-            )
-        }
+        // Добавляем NavBarFragment в контейнер навигации
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.navbarContainer, NavBarFragment(this, R.id.photoBtn))
+            .commit()
 
-        binding.flashBtn.setOnClickListener { toggleFlash(binding.flashBtn) }
-        binding.captureButton.setOnClickListener { capturePhoto() }
-        binding.switchBtn.setOnClickListener { switchCamera(binding.flashBtn) }
-    }
-
-    override fun onPermissionsGranted() {
-        super.onPermissionsGranted()
-        CameraUtil.getCameraProvider(this) { provider ->
-            cameraProvider = provider
-            setupCamera(binding.preview.surfaceProvider) {
-                imageCapture = ImageCapture.Builder()
-                    .setFlashMode(ImageCapture.FLASH_MODE_OFF)
-                    .build()
-                cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture)
-            }
+        // Загружаем первый фрагмент (Фото)
+        if (savedInstanceState == null) {
+            loadFragment(PhotoFragment(), TAG_PHOTO)
         }
     }
 
-    private fun animateFlashEffect() {
-        binding.root.apply {
-            foreground = android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
-            postDelayed({ foreground = null }, 100)
+    private fun loadFragment(fragment: Fragment, tag: String) {
+        // Не перезагружаем если тот же фрагмент уже активен
+        if (currentFragmentTag == tag && supportFragmentManager.findFragmentByTag(tag) != null) {
+            return
         }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment, tag)
+            .commit()
+        currentFragmentTag = tag
     }
 
-    private fun capturePhoto() {
-        checkAndRequestPermissions {
-            val file = CameraUtil.generateOutputFile("PHOTO", "jpg")
-            animateFlashEffect()
+    override fun onGallerySelected() {
+        loadFragment(GalleryFragment(), TAG_GALLERY)
+    }
 
-            imageCapture?.flashMode = if (isFlashEnabled) {
-                ImageCapture.FLASH_MODE_ON
-            } else {
-                ImageCapture.FLASH_MODE_OFF
-            }
+    override fun onPhotoModeSelected() {
+        loadFragment(PhotoFragment(), TAG_PHOTO)
+    }
 
-            imageCapture?.takePicture(
-                ImageCapture.OutputFileOptions.Builder(file).build(),
-                cameraExecutor,
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        runOnUiThread {
-                            CameraUtil.showToast(
-                                this@MainActivity,
-                                "Photo saved: ${file.absolutePath}"
-                            )
-                            MediaScannerConnection.scanFile(
-                                this@MainActivity,
-                                arrayOf(file.absolutePath),
-                                null,
-                                null
-                            )
-                        }
-                    }
+    override fun onVideoModeSelected() {
+        loadFragment(VideoFragment(), TAG_VIDEO)
+    }
 
-                    override fun onError(exception: ImageCaptureException) {
-                        runOnUiThread {
-                            CameraUtil.showToast(
-                                this@MainActivity,
-                                "Failed to capture photo."
-                            )
-                        }
-                    }
-                }
-            )
+    fun showFullScreenFragment(index: Int) {
+        val fragment = FullScreenFragment.newInstance(index)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment, TAG_FULL_SCREEN)
+            .addToBackStack(null)
+            .commit()
+        currentFragmentTag = TAG_FULL_SCREEN
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+            currentFragmentTag = TAG_GALLERY
+        } else {
+            super.onBackPressed()
         }
     }
 }
-

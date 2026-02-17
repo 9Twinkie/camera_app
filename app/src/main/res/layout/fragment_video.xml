@@ -23,7 +23,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-
     <TextView
         android:id="@+id/recordTimer"
         android:layout_width="wrap_content"
@@ -34,13 +33,10 @@
         android:background="@drawable/bg_timer"
         android:padding="8dp"
         android:visibility="gone"
-
         app:layout_constraintBottom_toTopOf="@id/captureButton"
         app:layout_constraintStart_toStartOf="@id/captureButton"
         app:layout_constraintEnd_toEndOf="@id/captureButton"
         android:layout_marginBottom="12dp"/>
-
-
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/captureButton"
@@ -81,14 +77,5 @@
         android:src="@drawable/ic_flash_state_off"
         app:layout_constraintTop_toBottomOf="@id/switchBtn"
         app:layout_constraintEnd_toEndOf="@id/preview" />
-
-
-    <FrameLayout
-        android:id="@+id/navbarContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

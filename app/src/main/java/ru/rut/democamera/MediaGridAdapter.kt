@@ -11,7 +11,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 class MediaGridAdapter(
     private val files: List<File>,
     private val listener: OnItemClickListener
@@ -21,9 +20,10 @@ class MediaGridAdapter(
         fun onItemClick(position: Int)
     }
 
-    class ViewHolder(private val binding: ItemMediaGridBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(file: File, listener: OnItemClickListener) {
+    class ViewHolder(private val binding: ItemMediaGridBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
+        fun bind(file: File, listener: OnItemClickListener) {
             Glide.with(binding.root)
                 .load(file)
                 .centerCrop()
@@ -34,7 +34,6 @@ class MediaGridAdapter(
 
             val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
             val formattedDate = dateFormat.format(Date(file.lastModified()))
-
             binding.dateText.text = formattedDate
 
             binding.root.setOnClickListener {
@@ -44,11 +43,14 @@ class MediaGridAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemMediaGridBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemMediaGridBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
         return ViewHolder(binding)
     }
 
     override fun getItemCount() = files.size
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(files[position], listener)
     }

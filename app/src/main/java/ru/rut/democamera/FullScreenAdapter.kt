@@ -16,7 +16,9 @@ class FullScreenAdapter(private var files: List<File>) :
     class ViewHolder(val binding: ItemFullscreenMediaBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemFullscreenMediaBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemFullscreenMediaBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
         return ViewHolder(binding)
     }
 
@@ -26,7 +28,7 @@ class FullScreenAdapter(private var files: List<File>) :
         val file = files[position]
         val extension = file.extension.lowercase(Locale.getDefault())
 
-        if (extension in listOf("mp4")) {
+        if (extension in listOf("mp4", "3gp")) {
             holder.binding.imageView.visibility = android.view.View.GONE
             holder.binding.videoView.visibility = android.view.View.VISIBLE
             holder.binding.videoView.setVideoURI(Uri.fromFile(file))
