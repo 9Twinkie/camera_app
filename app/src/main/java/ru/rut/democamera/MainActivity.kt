@@ -1,13 +1,16 @@
 package ru.rut.democamera
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import ru.rut.democamera.databinding.ActivityMainBinding
-import ru.rut.democamera.utils.PermissionsUtil
 
 class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
-
     private lateinit var binding: ActivityMainBinding
     private var currentFragmentTag: String = TAG_PHOTO
 
@@ -19,27 +22,38 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // ✅ EDGE-TO-EDGE
+        enableEdgeToEdge()
+
         super.onCreate(savedInstanceState)
+
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Добавляем NavBarFragment в контейнер навигации
+        // Отступ только для navbar
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navbarContainer) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(0, 0, 0, systemBars.bottom)
+            insets
+        }
+
         supportFragmentManager.beginTransaction()
             .replace(R.id.navbarContainer, NavBarFragment(this, R.id.photoBtn))
             .commit()
 
-        // Загружаем первый фрагмент (Фото)
         if (savedInstanceState == null) {
             loadFragment(PhotoFragment(), TAG_PHOTO)
         }
     }
 
     private fun loadFragment(fragment: Fragment, tag: String) {
-        // Не перезагружаем если тот же фрагмент уже активен
         if (currentFragmentTag == tag && supportFragmentManager.findFragmentByTag(tag) != null) {
             return
         }
-
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment, tag)
             .commit()
@@ -71,6 +85,10 @@ class MainActivity : AppCompatActivity(), NavBarFragment.NavBarListener {
         if (supportFragmentManager.backStackEntryCount > 0) {
             supportFragmentManager.popBackStack()
             currentFragmentTag = TAG_GALLERY
+
+            // ✅ Восстанавливаем Edge-to-Edge при возврате из FullScreen
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.TRANSPARENT
         } else {
             super.onBackPressed()
         }

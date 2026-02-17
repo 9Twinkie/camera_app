@@ -1,17 +1,20 @@
 package ru.rut.democamera
 
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import ru.rut.democamera.databinding.FragmentFullScreenBinding
 import java.io.File
 
 class FullScreenFragment : Fragment() {
-
     private var _binding: FragmentFullScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var files: MutableList<File>
@@ -29,7 +32,8 @@ class FullScreenFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentFullScreenBinding.inflate(inflater, container, false)
@@ -39,13 +43,24 @@ class FullScreenFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // ✅ EDGE-TO-EDGE для FullScreenFragment
+        requireActivity().window.statusBarColor = Color.TRANSPARENT
+        requireActivity().window.navigationBarColor = Color.TRANSPARENT
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+
+        // ✅ Отступ для кнопок снизу
+        ViewCompat.setOnApplyWindowInsetsListener(binding.buttonContainer) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(0, 0, 0, systemBars.bottom)
+            insets
+        }
+
         val directory = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
             "Camera app"
         )
         files = (directory.listFiles()?.toList()?.sortedByDescending { it.lastModified() }
             ?: emptyList()).toMutableList()
-
         currentIndex = arguments?.getInt("current_index", 0) ?: 0
 
         if (currentIndex >= files.size) currentIndex = files.size - 1

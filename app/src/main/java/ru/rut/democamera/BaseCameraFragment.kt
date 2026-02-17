@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 abstract class BaseCameraFragment : Fragment() {
-
     protected lateinit var cameraExecutor: ExecutorService
     protected var camera: Camera? = null
     protected var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -28,7 +27,6 @@ abstract class BaseCameraFragment : Fragment() {
     protected lateinit var focusView: View
     protected lateinit var flashButton: ImageButton
     protected lateinit var switchButton: ImageButton
-
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var currentZoomRatio: Float = 1.0f
 
@@ -62,7 +60,6 @@ abstract class BaseCameraFragment : Fragment() {
         val allGranted = requiredPermissions.all {
             ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
         }
-
         if (allGranted) {
             onPermissionsGranted()
         } else {
@@ -85,10 +82,13 @@ abstract class BaseCameraFragment : Fragment() {
 
         try {
             cameraProvider.unbindAll()
-            camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview)
 
-            // Зум уже обрабатывается в setupGestureDetector()
-            // CameraUtil.initPinchToZoom не нужен, так как у нас свой ScaleGestureDetector
+            // ✅ Привязываем Preview + дополнительные use cases В ОДНОМ ВЫЗОВЕ
+            camera = cameraProvider.bindToLifecycle(
+                this,
+                cameraSelector,
+                preview
+            )
 
             setupAdditionalUseCases(cameraProvider)
         } catch (e: Exception) {
@@ -100,7 +100,7 @@ abstract class BaseCameraFragment : Fragment() {
         scaleGestureDetector = ScaleGestureDetector(
             requireContext(),
             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScale(detector:   ScaleGestureDetector): Boolean {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
                     camera?.let { cam ->
                         currentZoomRatio *= detector.scaleFactor
                         val clampedZoomRatio = currentZoomRatio.coerceIn(
@@ -117,14 +117,11 @@ abstract class BaseCameraFragment : Fragment() {
     }
 
     protected fun handleTouchEvent(event: MotionEvent): Boolean {
-        // Обработка зума жестом
         scaleGestureDetector?.onTouchEvent(event)
 
-        // Обработка тапа для фокуса
         if (event.pointerCount == 1 && event.action == MotionEvent.ACTION_UP) {
             handleTapToFocus(event)
         }
-
         return true
     }
 
@@ -164,8 +161,6 @@ abstract class BaseCameraFragment : Fragment() {
             if (isFlashEnabled) R.drawable.ic_flash_state_on
             else R.drawable.ic_flash_state_off
         )
-
-        // Включаем TORCH для постоянного света
         camera?.cameraControl?.enableTorch(isFlashEnabled)
     }
 
@@ -175,11 +170,8 @@ abstract class BaseCameraFragment : Fragment() {
         } else {
             CameraSelector.DEFAULT_BACK_CAMERA
         }
-
         val isFrontCamera = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
         flashButton.visibility = if (isFrontCamera) View.GONE else View.VISIBLE
-
-        // Перезапускаем камеру
         onPermissionsGranted()
     }
 

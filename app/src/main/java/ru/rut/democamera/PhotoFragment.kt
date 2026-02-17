@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import ru.rut.democamera.databinding.FragmentPhotoBinding
 import ru.rut.democamera.utils.CameraUtil
@@ -41,6 +43,22 @@ class PhotoFragment : BaseCameraFragment() {
         switchButton = binding.switchBtn
 
         setupListeners()
+    }
+
+    protected fun setupEdgeToEdge() {
+        ViewCompat.setOnApplyWindowInsetsListener(previewView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            // Применяем отступы для preview
+            view.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                0  // Снизу не добавляем, там кнопка
+            )
+
+            insets
+        }
     }
 
     private fun setupListeners() {
